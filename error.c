@@ -1,6 +1,6 @@
 #include "smol.h"
 
-//char* tokenizer_error(TOKEN* token){
-//    token->location
-//    printf("Unrecognized token")
-//}
+void unexpected_token_error(char* scanned){
+    printf("Unexpected token: %c\n", *scanned);
+    exit(1);
+}

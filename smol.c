@@ -33,7 +33,8 @@ int main(int argc, char** argv){
         printf("TOKEN:%s\n", present_token);
         free(present_token);
         tokens = tokens->next;
-    }// Call Parser
+    }
+    // Call Parser
     // Call Code generator
     return 0;
 }

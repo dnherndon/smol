@@ -8,7 +8,7 @@ test: smol
 	./test.sh
 
 clean:
-	rm -f smol.o smol tmp.* tmp*
+	rm -f smol
 
 clean_test:
 	rm -f tmp* tmp.* *.o *.exe

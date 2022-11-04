@@ -21,6 +21,17 @@ static bool match(char* this, char* that){
     return strncmp(this, that, strlen(that)) == 0;
 };
 
+//
+void print_token(TOKEN* token){
+    char* tmp = token->location;
+    char* present_token = calloc(1, token->length);
+    for(int i = 0; i < token->length; i++){
+        present_token[i] += tmp[i];
+    }
+    printf("%s", present_token);
+    free(present_token);
+}
+
 /*
  *******************************************************************************
  *                            TOKENIZER STRUCTURE                              *
@@ -79,6 +90,9 @@ TOKEN* tokenizer (char* scanner){
             // Increment the scanner the block comment is closed
             while(!match(scanner, "*/")){
                 scanner++;
+                if (!*scanner){
+                    
+                }
             }
             current = current->next = create_token(COMMENT, p, scanner);
             continue;
@@ -94,14 +108,35 @@ TOKEN* tokenizer (char* scanner){
             scanner += 2;
             while(isxdigit(*scanner)) scanner++;
             current = current->next = create_token(CONSTANTS, p, scanner);
+            current->constType = INTEGERS;
+            current->integerType = HEX;
+            continue;
         }
         // "Normal" numbers
         if (isdigit(*scanner)){
             char* p = scanner;
             while(isdigit(*scanner)) scanner ++;
             current = current->next = create_token(CONSTANTS, p, scanner);
+            current->constType = INTEGERS;
+            current->integerType = DIGIT;
             continue;
         }
+        /*
+         **********************************
+         *    KEYWORDS AND IDENTIFIERS    *
+         * ********************************
+         */
+        // When we start scanning we do not know if it is a keyword
+        // or an identifier
+        if((*scanner >= 'a' && *scanner <= 'z')
+        || (*scanner >= 'A' && *scanner <= 'Z')
+        || (*scanner == '_')){
+            char* p = scanner;
+            while(isalnum(*scanner) || (*scanner == '_')) scanner++;
+            current = current->next = create_token(IDNTFR, p, scanner);
+            continue;
+        }
+        unexpected_token_error(scanner);
         // KEYWORDS
         scanner++;
     }
