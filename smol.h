@@ -46,6 +46,7 @@ struct TOKEN{
 };
 
 TOKEN* tokenizer(char* scanner);
+void print_token(TOKEN* token);
 
 /*
  ************************
@@ -72,3 +73,5 @@ struct NODE{
     nodeKind kind;
     int64_t constantVal;
 };
+
+NODE* parse(TOKEN* token);

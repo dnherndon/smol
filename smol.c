@@ -1,4 +1,4 @@
-/*    smol is a small C compiler
+/*   smol is a small C compiler
  *   Copyright (C) 2022  D. Nigh Herndon
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -23,18 +23,16 @@ int main(int argc, char** argv){
     }
     char* input_buffer = argv[1];
     // Call Tokenizer
-    TOKEN* tokens = tokenizer(input_buffer);
-    while(tokens->type != END) {
-        char* tmp = tokens->location;
-        char* present_token = calloc(1, tokens->length);
-        for(int i = 0; i < tokens->length; i++){
-            present_token[i] += tmp[i];
-        }
-        printf("TOKEN:%s\n", present_token);
-        free(present_token);
-        tokens = tokens->next;
+    TOKEN* token = tokenizer(input_buffer);
+    TOKEN* head_token = token;
+    while(token->type != END) {
+        printf("TOKEN: ");
+        print_token(token);
+        printf("\n");
+        token = token->next;
     }
     // Call Parser
+    NODE* ast_node = parse(head_token);
     // Call Code generator
     return 0;
 }

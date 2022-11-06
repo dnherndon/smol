@@ -21,7 +21,7 @@ static bool match(char* this, char* that){
     return strncmp(this, that, strlen(that)) == 0;
 };
 
-//
+// 
 void print_token(TOKEN* token){
     char* tmp = token->location;
     char* present_token = calloc(1, token->length);

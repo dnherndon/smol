@@ -1,12 +1,17 @@
 #include "smol.h"
 
-NODE* create_node(nodeKind kind, TOKEN* token, TOKEN** tokenloc){
+NODE* create_node(nodeKind kind, TOKEN* token){
     NODE* node = calloc(1, sizeof(NODE));
 
     node->kind = kind;
-    printf("%s\n", token->location);
-    node->constantVal = strtoul(token->location, &token->location, 10);
-
+    if (token->integerType == INTEGERS) {
+        node->constantVal = strtoul(token->location, &token->location, 10);
+    }
+    else if (token->integerType == HEX){
+        token->location += 2;
+        node->constantVal = strtoul(token->location, &token->location, 16);
+    }
+    printf("%ld\n", node->constantVal);
     return node;
 }
 
@@ -15,8 +20,9 @@ NODE* parse(TOKEN* token){
     NODE* curr_node = &head;
     while(token->type != END){
         if (token->type == CONSTANTS){
-            curr_node = curr_node->next = create_node(ND_INTEGERS, token, &token);
+            curr_node = curr_node->next = create_node(ND_INTEGERS, token);
             token = token->next;
+            continue;    
         }
         token = token->next;
     }
