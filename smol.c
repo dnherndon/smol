@@ -25,9 +25,10 @@ int main(int argc, char** argv){
     // Call Tokenizer
     TOKEN* token = tokenizer(input_buffer);
     TOKEN* head_token = token;
-    while(token->type != END) {
+    while(token->lexElem != END) {
         printf("TOKEN: ");
         print_token(token);
+        printf(" %i", token->punctType);
         printf("\n");
         token = token->next;
     }

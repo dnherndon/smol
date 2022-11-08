@@ -16,7 +16,7 @@
  */
 #include "smol.h"
 
-NODE* create_node(nodeKind kind, TOKEN* token){
+NODE* create_constant_node(nodeKind kind, TOKEN* token){
     NODE* node = calloc(1, sizeof(NODE));
 
     node->kind = kind;
@@ -27,18 +27,22 @@ NODE* create_node(nodeKind kind, TOKEN* token){
         token->location += 2;
         node->constantVal = strtoul(token->location, &token->location, 16);
     }
-    printf("%ld\n", node->constantVal);
     return node;
 }
 
 NODE* parse(TOKEN* token){
     NODE head = {};
     NODE* curr_node = &head;
-    while(token->type != END){
-        if (token->type == CONSTANTS){
-            curr_node = curr_node->next = create_node(ND_INTEGERS, token);
+    while(token->lexElem != END){
+        if (token->lexElem == CONSTANTS){
+            curr_node = curr_node->next = create_constant_node(ND_INTEGERS, token);
             token = token->next;
             continue;    
+        }
+        if (token->lexElem == KEYWRD){
+            //curr_node = curr_node->next = create_keyword_node(ND_)
+            token = token->next;
+            continue;
         }
         token = token->next;
     }

@@ -22,7 +22,7 @@ TOKEN* create_token(lexicalElement type, char* beginning, char* end){
     // token is then a pointer to this new spot in memory.
     TOKEN* token = calloc(1, sizeof(TOKEN));
     // The lexicalElement has been given to us by the function callee
-    token->type = type;
+    token->lexElem = type;
     // The location of the token is given by where the token starts
     token->location = beginning;
     // The length of the token is simply the ending subtracted from the beginning
@@ -37,7 +37,7 @@ static bool match(char* this, char* that){
     return strncmp(this, that, strlen(that)) == 0;
 };
 
-// 
+// Prints the current token
 void print_token(TOKEN* token){
     char* tmp = token->location;
     char* present_token = calloc(1, token->length);
@@ -47,6 +47,63 @@ void print_token(TOKEN* token){
     printf("%s", present_token);
     free(present_token);
 }
+
+// Identifier or Keyword
+// This function checks to see if the character string
+// is a keyword or just an identifier. It does this by
+// comparing to every possible keyword in the C language.
+// Not exactly efficient, but there is really no other way to
+// do this.
+keywordKind is_keyword(char* start, char* end){
+    char* keywords [] = {"auto", "break", "case", "char", "const", "continue",
+                         "default", "do", "double", "else", "enum", "extern",
+                         "float", "for", "goto", "if", "inline", "int", "long",
+                         "register", "restrict", "return", "short", "signed",
+                         "sizeof", "static", "struct", "switch", "typedef",
+                         "union", "unsigned", "void", "volatile", "while",
+                         "_Aligna", "_Alignof", "_Atomic", "_Bool", "_Complex",
+                         "_Generic", "_Imaginary", "_Noreturn", "_Static_assert",
+                         "_Thread_local"};
+        
+        keywordKind currentKeyword = 0;
+
+        for(int i = 0; i < (sizeof(keywords)/sizeof(keywords[i])); i++){
+            // If the string we are checking is not the length,
+            // then it cannot be the keyword
+            if (strlen(keywords[i]) != (end - start)){
+                continue;
+            }
+            else if (strncmp(start, keywords[i], strlen(keywords[i])) == 0) {
+                currentKeyword += i;
+                return currentKeyword;
+            }
+        }
+        currentKeyword = NOTKWD;
+        return currentKeyword;
+    }
+// Punctuators
+punctuatorKind is_punctuator(char* start, char** startloc){
+    char* punctuators [] = {"...", "->", "++", "--", "<<", ">>", "<=", ">=", "==", "!=",
+                            "&&", "||", "*=", "/=", "%=", "+=", "-=", "<<=", ">>=", 
+                            "&=", "^=", "|=", "##",
+                           "[", "]", "(", ")", "{", "}", ".",  
+                           "&", "*", "+", "-", "~", "!", 
+                           "/", "%", "<", ">",  "^", "|",  
+                           "?", ":", ";", "=", ",", "#"};
+        
+        punctuatorKind currentPunctuator = 0;
+
+        for(int i = 0; i < (sizeof(punctuators)/sizeof(punctuators[i])); i++){
+            if (strncmp(start, punctuators[i], strlen(punctuators[i])) == 0){
+                *startloc += (strlen(punctuators[i]));
+                currentPunctuator += i;
+                printf("%i\n", i);
+                return currentPunctuator;
+            }
+        }
+        currentPunctuator = NOTPUNCT;
+        return currentPunctuator;
+    }
 
 /*
  *******************************************************************************
@@ -149,10 +206,30 @@ TOKEN* tokenizer (char* scanner){
         || (*scanner == '_')){
             char* p = scanner;
             while(isalnum(*scanner) || (*scanner == '_')) scanner++;
-            
-            current = current->next = create_token(IDNTFR, p, scanner);
+            keywordKind type = 0;
+            type = is_keyword(p, scanner);
+            if (type == NOTKWD){
+                current = current->next = create_token(IDNTFR, p, scanner);
+            }
+            else{
+                current = current->next = create_token(KEYWRD, p, scanner);
+                current->keywdType = type;
+            }
             continue;
         }
+        /*
+         *********************
+         *    PUNCTUATORS    *
+         * *******************
+         */
+        char* p = scanner;
+        punctuatorKind tmpPunct = is_punctuator(scanner, &scanner);
+        if (tmpPunct != NOTPUNCT){
+            current = current->next = create_token(PUNCTR, p, scanner);
+            current->punctType = tmpPunct;
+            continue;
+        }
+
         unexpected_token_error(scanner);
         // KEYWORDS
         scanner++;

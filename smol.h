@@ -27,6 +27,7 @@
  * *****************
  */
 
+// The different types of lexical elements, AKA Tokens
 typedef enum{
     KEYWRD,
     IDNTFR,
@@ -39,28 +40,74 @@ typedef enum{
     END
 }lexicalElement;
 
+
+
+ // ***** KEYWORDS *****
+
+typedef enum{
+    AUTO, BREAK, CASE, CHAR, CONST, CONTINUE,
+    DEFAULT, DO, DOUBLE, ELSE, ENUM, EXTERN,
+    FLOAT, FOR, GOTO, IF, INLINE, INT, LONG,
+    REGISTER, RESTRICT, RETURN, SHORT, SIGNED,
+    SIZEOF, STATIC, STRUCT, SWITCH, TYPEDEF,
+    UNION, UNSIGNED, VOID, VOLATILE, WHILE,
+    _ALIGNA, _ALIGNOF, _ATOMIC, _BOOL, _COMPLEX,
+    _GENERIC, _IMAGINARY, _NORETURN, _STATIC_ASSERT,
+    _THREAD_LOCAL, NOTKWD
+}keywordKind;
+
+
+ // ***** CONSTANTS *****
+
+// The different types of constants
+typedef enum{
+    INTEGERS,
+    FLOATINGs,
+    ENUMS,
+    CHARS
+}constantKind;
+// The different types of integer constants
 typedef enum{
     DIGIT,
     HEX,
     OCTAL
 }integerKind;
 
-typedef enum{
-    INTEGERS
-}constantKind;
+ // ***** PUNCTUATORS *****
+ typedef enum{
+    ELIPSES, DEREFERENCE, INCREMENT, DECREMENT, LSHFT, RSHFT, LE, GE, EQUIV, NOTEQUIV,
+    LOGAND, LOGOR, TMSEQUAL, DIVEQUAL, PERCEQUAL, PLUSEQUAL, MINUSEQUAL, LSHFTEQUAL, RSHFTEQUAL,
+    BITANDEQUAL, BITXOREQUAL, BITOREQUAL, DBLPOUND,
+    LBRACK, RBRACK, LPAR, RPAR, LBRACE, RBRACE, DOT, 
+    BITAND, STAR, PLUS, MINUS, BITNOT, EXCLAMATION, 
+    FWDSLSH, PERCENT, LT, GT, BITXOR, BITOR,
+    QUESTION, COLON, SEMICOLON, EQUAL, COMMA, POUND,
+    NOTPUNCT 
+ }punctuatorKind;
+
+// ***** The Token Data Structure *****
 
 typedef struct TOKEN TOKEN;
 
 struct TOKEN{
     TOKEN* next;                // Pointer to the next item in linked list
-    lexicalElement type;        // The type of token (lexical element)
+    lexicalElement lexElem;     // The type of token (lexical element)
     int length;                 // The length of the token
     char* location;             // Location of the token
 
+
+// ***** KEYWORDS *****
+    keywordKind keywdType;
+
+ // ***** CONSTANTS *****
     constantKind constType;
     integerKind integerType;
+
+// ***** PUNCTUATORS *****
+    punctuatorKind punctType;
 };
 
+// ***** Tokenizer Function Prototypes *****
 TOKEN* tokenizer(char* scanner);
 void print_token(TOKEN* token);
 
@@ -80,6 +127,7 @@ void unexpected_token_error(char* scanned);
 typedef struct NODE NODE;
 
 typedef enum{
+    ND,
     ND_INTEGERS,
 
 }nodeKind;
