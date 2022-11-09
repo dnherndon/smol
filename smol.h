@@ -127,9 +127,7 @@ void unexpected_token_error(char* scanned);
 typedef struct NODE NODE;
 
 typedef enum{
-    ND,
-    ND_INTEGERS,
-
+    FUNC
 }nodeKind;
 
 struct NODE{

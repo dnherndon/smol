@@ -17,18 +17,81 @@
 #include "smol.h"
 
 int main(int argc, char** argv){
+    // If we get too many arguments, exit the program
     if (argc != 2){
         printf("Incorrect number of arguments\n");
-        return 0;
+        exit(1);
     }
-    char* input_buffer = argv[1];
-    // Call Tokenizer
-    TOKEN* token = tokenizer(input_buffer);
+    // Create an input and an output file
+    FILE* input_file;
+    FILE* output_file;
+
+    // The input from the command line is the file path
+    char* input_path = argv[1];
+
+    // Attempt to open the file for reading "r"
+    input_file = fopen(input_path,"r");
+
+    // If opening the file failed, we say that it could not open
+    // and then exit the program
+    if(!input_file){
+        printf("Cannot open %s\n", input_path);
+        exit(1);
+    }
+
+    // Move the file pointer to the end of the file
+    fseek(input_file, 0, SEEK_END);
+
+    // Determine the location of the file pointer
+    // This tells us how many bytes the file is
+    size_t file_size = ftell(input_file);
+
+    // Move the file pointer back to the beginning;
+    fseek(input_file, 0, SEEK_SET);
+
+    // Allocate a buffer that is the size of the file
+    char* buffer = calloc(file_size, sizeof(char));
+    if (buffer == NULL){
+        printf("Memory not allocated\n");
+        exit(1);
+    }
+
+    // Create a pointer to the beginning of the buffer
+    char* input_stream = buffer;
+
+    // Label to determine how many bytes have been read from the file
+    size_t bytes_read;
+
+    // We now loop through the file and read the bites into the buffer
+    for(;;){
+        // Assigns the number of bytes read to a temp
+        // The fread function reads data from the file and places it in
+        // the buffer. We tell it that each element is the size of a char,
+        // that we want to read the whole file, and we give it the pointer
+        // to the file
+        size_t tmp = fread(buffer, sizeof(char), file_size, input_file);
+
+        // Sums total bytes read
+        bytes_read += tmp; 
+
+        // If it read no bytes, indicates end of file. Break the loop
+        if (tmp == 0) break;    
+    }
+
+    // Sanity check to ensure that the bytes read equal the file size
+    if (bytes_read != file_size){
+        printf("Memory corrupted\n");
+        exit(1);
+    }
+    // Close the input file. Free the memory
+    fclose(input_file);
+
+    
+    TOKEN* token = tokenizer(input_stream);
     TOKEN* head_token = token;
     while(token->lexElem != END) {
         printf("TOKEN: ");
         print_token(token);
-        printf(" %i", token->punctType);
         printf("\n");
         token = token->next;
     }

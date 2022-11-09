@@ -34,16 +34,6 @@ NODE* parse(TOKEN* token){
     NODE head = {};
     NODE* curr_node = &head;
     while(token->lexElem != END){
-        if (token->lexElem == CONSTANTS){
-            curr_node = curr_node->next = create_constant_node(ND_INTEGERS, token);
-            token = token->next;
-            continue;    
-        }
-        if (token->lexElem == KEYWRD){
-            //curr_node = curr_node->next = create_keyword_node(ND_)
-            token = token->next;
-            continue;
-        }
         token = token->next;
     }
     return head.next;

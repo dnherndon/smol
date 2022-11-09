@@ -97,7 +97,6 @@ punctuatorKind is_punctuator(char* start, char** startloc){
             if (strncmp(start, punctuators[i], strlen(punctuators[i])) == 0){
                 *startloc += (strlen(punctuators[i]));
                 currentPunctuator += i;
-                printf("%i\n", i);
                 return currentPunctuator;
             }
         }
@@ -138,18 +137,17 @@ TOKEN* tokenizer (char* scanner){
         }
         // COMMENTS - INLINE
         // If scanner points to "//"
-        //if (match(scanner,"//")){
-        //    // Move the scanner down 2 spots to move over '//'
-        //    printf("%c\n", *scanner);
-        //    scanner += 2;
-        //    // Now just increment the scanner until end of line is detected
-        //    while (!match(scanner,"\n")){
-        //        printf("%c\n", *scanner);
-        //        getchar();
-        //        scanner++;
-        //    }
-        //    continue;
-        //}
+        if (match(scanner,"//")){
+            // Move the scanner down 2 spots to move over '//'
+            scanner += 2;
+            char* p = scanner;
+            // Now just increment the scanner until end of line is detected
+            while (!match(scanner,"\n")){
+                scanner++;
+            }
+            current = current->next = create_token(COMMENT, p, scanner);
+            continue;
+        }
         /*
          ******************
          *    COMMENTS    *
@@ -163,11 +161,10 @@ TOKEN* tokenizer (char* scanner){
             // Increment the scanner the block comment is closed
             while(!match(scanner, "*/")){
                 scanner++;
-                if (!*scanner){
-                    
-                }
             }
             current = current->next = create_token(COMMENT, p, scanner);
+            // Move beyond the "*/"
+            scanner += 2;
             continue;
         }
         /*
