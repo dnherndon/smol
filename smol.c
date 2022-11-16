@@ -88,15 +88,15 @@ int main(int argc, char** argv){
 
     
     TOKEN* token = tokenizer(input_stream);
-    TOKEN* head_token = token;
-    while(token->lexElem != END) {
-        printf("TOKEN: ");
-        print_token(token);
-        printf("\n");
-        token = token->next;
-    }
+    //TOKEN* head_token = token;
+    //while(token->lexElem != END) {
+    //    printf("TOKEN: ");
+    //    print_token(token);
+    //    printf("\n");
+    //    token = token->next;
+    //}
     // Call Parser
-    NODE* ast_node = parse(head_token);
+    NODE* ast_node = parse(token);
     // Call Code generator
     return 0;
 }
