@@ -22,9 +22,8 @@ int main(int argc, char** argv){
         printf("Incorrect number of arguments\n");
         exit(1);
     }
-    // Create an input and an output file
+    // Create an input file
     FILE* input_file;
-    FILE* output_file;
 
     // The input from the command line is the file path
     char* input_path = argv[1];
@@ -41,7 +40,7 @@ int main(int argc, char** argv){
 
     // Move the file pointer to the end of the file
     fseek(input_file, 0, SEEK_END);
-
+    
     // Determine the location of the file pointer
     // This tells us how many bytes the file is
     size_t file_size = ftell(input_file);
@@ -55,12 +54,12 @@ int main(int argc, char** argv){
         printf("Memory not allocated\n");
         exit(1);
     }
-
+    
     // Create a pointer to the beginning of the buffer
     char* input_stream = buffer;
 
     // Label to determine how many bytes have been read from the file
-    size_t bytes_read;
+    size_t bytes_read = 0;
 
     // We now loop through the file and read the bites into the buffer
     for(;;){

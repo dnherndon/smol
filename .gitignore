@@ -1,8 +1,9 @@
-c_nodes.txt
-out.txt
+*.txt
 smol
 test/test.c
 The syntax of C in Backus-Naur form.html
-test/test
-test/test.asm
+test/*
 The syntax of C in Backus-Naur form_files/js
+.vscode/settings.json
+*.o
+*.asm
