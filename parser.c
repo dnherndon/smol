@@ -45,6 +45,7 @@ int jump_statement(TOKEN** token);
 int expression(TOKEN** token);
 int statement(TOKEN** token);
 int init_declarator(TOKEN** token);
+int initializer(TOKEN** token);
 
 // Look ahead some number of tokens
 TOKEN* look_ahead(TOKEN** token, int how_far){
@@ -73,6 +74,28 @@ TOKEN* look_ahead(TOKEN** token, int how_far){
 // Consumes the token passed
 int consume_token(TOKEN** token){
     *token = (*token)->next;
+    return 1;
+}
+// <assignment-operator> ::= =
+//                         | *=
+//                         | /=
+//                         | %=
+//                         | +=
+//                         | -=
+//                         | <<=
+//                         | >>=
+//                         | &=
+//                         | ^=
+//                         | |=
+int assignment_operator(TOKEN** token){
+
+    return 1;
+}
+// <initializer> ::= <assignment-expression>
+//                 | { <initializer-list> }
+//                 | { <initializer-list> , }
+int initializer(TOKEN** token){
+    assignment_expression(token);
     return 1;
 }
 // <conditional-expression> ::= <logical-or-expression> {"?" <expression> ":" <conditional-expression>}?
@@ -193,6 +216,7 @@ int constant(TOKEN** token){
 //                           | <unary-expression> <assignment-operator> <assignment-expression>
 int assignment_expression(TOKEN** token){
     conditional_expression(token);
+    unary_expression(token);
     return 1;  
 }
 // <jump-statement> ::= goto <identifier> ;
@@ -230,11 +254,22 @@ int statement(TOKEN** token){
 // <init-declarator> ::= <declarator>
 //                     | <declarator> = <initializer>
 int init_declarator(TOKEN** token){
+    if (declarator(token) == 1){
+        consume_token(token);
+    }
+    if((*token)->punctType == EQUAL){
+        initializer(token);
+    }
     return 1;
 }
-// <declaration> ::=  {<declaration-specifier>}+ {<init-declarator>}* ;
+// <declaration> ::=  {<declaration-specifier>}+ {<init-declarator>}* ";"
 int declaration(TOKEN** token){
     declaration_specifier(token);
+    init_declarator(token);
+    if((*token)->punctType != SEMICOLON){
+        printf("Expected ;\n");
+        exit(1);
+    }
     return 1;
 }
 
@@ -286,6 +321,7 @@ int direct_declarator(TOKEN** token){
             exit(1);
         }
     }
+    print_token(*token);
     printf("Expected identifier\n");
     exit(1);
     return 1;
@@ -369,6 +405,9 @@ int function_definition(TOKEN** token){
         if(tmp == 0) break;
     }
     if (declarator(token) == 2){
+        printf("global _");
+        print_token(*token);
+        printf("\n_");
         print_token(*token);
         consume_token(token);
         consume_token(token);
