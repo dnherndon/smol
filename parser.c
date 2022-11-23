@@ -14,10 +14,16 @@
  *   You should have received a copy of the GNU General Public License
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+// A big thank you to the author of this website https://www.quut.com/c/ANSI-C-grammar-y.html
 #include "smol.h"
 
 // Function prototypes
+int block_item(TOKEN** token);
+int block_item_list(TOKEN** token);
+int block_item_list2(TOKEN** token);
 int direct_declarator(TOKEN** token);
+int direct_declarator2(TOKEN** token);
 int declarator(TOKEN** token);
 int type_specifier(TOKEN** token);
 int declaration_specifier(TOKEN** token);
@@ -25,6 +31,7 @@ int function_definition(TOKEN** token);
 int expression(TOKEN** token);
 int assignment_expression(TOKEN** token);
 int conditional_expression(TOKEN** token);
+int conditional_expression2(TOKEN** token);
 int logical_or_expression(TOKEN** token);
 int logical_and_expression(TOKEN** token);
 int inclusive_or_expression(TOKEN** token);
@@ -42,10 +49,12 @@ int primary_expression(TOKEN** token);
 int constant(TOKEN** token);
 int assignment_expression(TOKEN** token);
 int jump_statement(TOKEN** token);
-int expression(TOKEN** token);
+int expression2(TOKEN** token);
 int statement(TOKEN** token);
-int init_declarator(TOKEN** token);
+int init_declarator_list(TOKEN** token);
+int init_declarator_list2(TOKEN** token);
 int initializer(TOKEN** token);
+int init_declarator(TOKEN** token);
 
 // Look ahead some number of tokens
 TOKEN* look_ahead(TOKEN** token, int how_far){
@@ -95,18 +104,51 @@ int assignment_operator(TOKEN** token){
 //                 | { <initializer-list> }
 //                 | { <initializer-list> , }
 int initializer(TOKEN** token){
-    assignment_expression(token);
-    return 1;
+    if (assignment_expression(token) == 1){
+        return 1;
+    }
+    else{
+        printf("Initializer lists not yet supported\n");
+        exit(1);
+    }
 }
-// <conditional-expression> ::= <logical-or-expression> {"?" <expression> ":" <conditional-expression>}?
+//  conditional_expression
+//  	: logical_or_expression conditional_expression2
+//  	;
 int conditional_expression(TOKEN** token){
-    logical_or_expression(token);
+    if (logical_or_expression(token) == 1){
+        if (conditional_expression2(token) == 1){
+            return 1;
+        }
+    }
+    return 0;
+}
+//  conditional_expression2
+//  	| '?' expression ':' conditional_expression conditional_expression2
+//      | epsilon
+//  	;
+int conditional_expression2(TOKEN** token){
+    if ((*token)->punctType == QUESTION){
+        consume_token(token);
+        if (expression(token) == 1){
+            if ((*token)->punctType == COLON){
+                consume_token(token);
+                if (conditional_expression(token) == 1){
+                    if (conditional_expression2(token) == 1){
+                        return 1;
+                    }
+                }
+            }
+        }
+    }
     return 1;
 }
-// <logical-or-expression> ::= <logical-and-expression> {"||" <logical-and-expression>}*
+//  logical_or_expression
+//  	: logical_and_expression
+//  	| logical_or_expression OR_OP logical_and_expression
+//  	;
 int logical_or_expression(TOKEN** token){
-    logical_and_expression(token);
-    return 1;
+
 }
 // <logical-and-expression> ::= <inclusive-or-expression> {"&&" <inclusive-or-expression>}*
 int logical_and_expression(TOKEN** token){
@@ -205,143 +247,305 @@ int primary_expression(TOKEN** token){
 //              | <floating-constant>
 //              | <enumeration-constant>
 int constant(TOKEN** token){
-    if ((*token)->constType == INTEGERS)
-        printf("    mov eax, ");
-        print_token(*token);
+    if ((*token)->constType == INTEGERS){
         consume_token(token);
-        printf("\n");
-    return 1;
+        return 1;
+    }
+    return 0;
 }
-// <assignment-expression> ::= <conditional-expression>
-//                           | <unary-expression> <assignment-operator> <assignment-expression>
+//  assignment_expression
+//  	: conditional_expression
+//  	| unary_expression assignment_operator assignment_expression
+//  	;
 int assignment_expression(TOKEN** token){
-    conditional_expression(token);
-    unary_expression(token);
-    return 1;  
+    if(conditional_expression(token) == 1){
+        return 1;
+    }
+    if (unary_expression(token) == 1){
+        if (assignment_operator(token) == 1){
+            if (assignment_expression(token) == 1){
+                return 1;
+            }
+        }
+    }
+    return 0;
 }
-// <jump-statement> ::= goto <identifier> ;
-//                    | continue ;
-//                    | break ;
-//                    | return {<expression>}? ;
+//  jump_statement
+//  	: GOTO IDENTIFIER ';'
+//  	| CONTINUE ';'
+//  	| BREAK ';'
+//  	| RETURN ';'
+//  	| RETURN expression ';'
+//  	;
 int jump_statement(TOKEN** token){
     if ((*token)->keywdType == RETURN){
         consume_token(token);
-        expression(token);
-        if ((*token)->punctType == SEMICOLON){
-            consume_token(token);
-            printf("    ret\n");
+        if (expression(token) == 1){
+            if ((*token)->punctType == SEMICOLON){
+                consume_token(token);
+                return 1;
+            }
+            printf("Expected ;\n");
+            exit(1);
+        }
+    }
+    return 0;
+}
+//  expression
+//  	: assignment_expression expression2
+//  	;
+int expression(TOKEN** token){
+    if (assignment_expression(token) == 1){
+        if (expression2(token) == 1){
             return 1;
+        }
+        return 0;
+    }
+    return 0;
+}
+//  expression2
+//  	| ',' assignment_expression expression2
+//      | epsilon
+//  	;
+int expression2(TOKEN** token){
+    if ((*token)->punctType == COMMA){
+        if (assignment_expression(token) == 1){
+            if (expression2(token) == 1){
+                return 1;
+            }
         }
     }
     return 1;
 }
-// <expression> ::= <assignment-expression>
-//                | <expression> , <assignment-expression>
-int expression(TOKEN** token){
-    assignment_expression(token);
-    return 1;
-}
-// <statement> ::= <labeled-statement>
-//               | <expression-statement>
-//               | <compound-statement>
-//               | <selection-statement>
-//               | <iteration-statement>
-//               | <jump-statement>
+//  statement
+//  	: labeled_statement
+//  	| compound_statement
+//  	| expression_statement
+//  	| selection_statement
+//  	| iteration_statement
+//  	| jump_statement
+//  	;
 int statement(TOKEN** token){
-    jump_statement(token);
-    return 1;
+    if (jump_statement(token) == 1){
+        return 1;
+    }
+    else{
+        return 0;
+    }
+
 }
-// <init-declarator> ::= <declarator>
-//                     | <declarator> = <initializer>
+//  init_declarator
+//  	: declarator '=' initializer
+//  	| declarator
+//  	;
 int init_declarator(TOKEN** token){
     if (declarator(token) == 1){
-        consume_token(token);
+        if ((*token)->punctType == EQUAL){
+            consume_token(token);
+            if (initializer(token) == 1){
+                return 1;
+            }
+            printf("Expected initializer\n");
+            exit(1);
+        }
+        return 1;
     }
-    if((*token)->punctType == EQUAL){
-        initializer(token);
+    return 0;
+}
+//  init_declarator_list
+//  	: init_declarator init_declarator_list2
+int init_declarator_list(TOKEN** token){
+    if(init_declarator(token) == 1){
+        if(init_declarator_list2(token) == 1){
+            return 1;
+        }
+        return 0;
+    }
+    return 0;
+}
+//  init_declarator_list2
+//  	: ',' init_declarator init_declarator_list2
+//      | epsilon
+int init_declarator_list2(TOKEN** token){
+    if ((*token)->punctType == COMMA){
+        consume_token(token);
+        if (init_declarator(token) == 1){
+            if (init_declarator_list2(token) == 1){
+                return 1;
+            }
+            return 0;
+        }
+        return 0;
     }
     return 1;
 }
-// <declaration> ::=  {<declaration-specifier>}+ {<init-declarator>}* ";"
+//  declaration
+//  	: declaration_specifiers ';'
+//  	| declaration_specifiers init_declarator_list ';'
+//  	| static_assert_declaration
+//  	;
 int declaration(TOKEN** token){
-    declaration_specifier(token);
-    init_declarator(token);
-    if((*token)->punctType != SEMICOLON){
-        printf("Expected ;\n");
-        exit(1);
+    if (declaration_specifier(token) == 1){
+        if ((*token)->punctType == SEMICOLON){
+            consume_token(token);
+            return 1;
+        }
+        if (init_declarator_list(token) == 1){
+            if ((*token)->punctType == SEMICOLON){
+                consume_token(token);
+                return 1;
+            }
+            else{
+                printf("Expected ;\n");
+                exit(1);
+            }
+        }
+        return 0;
+    }
+    return 0;
+}
+//  block_item_list
+//  	: block_item block_item_list2
+//  	;
+int block_item_list(TOKEN** token){
+    if(block_item(token) == 1){
+        block_item_list2(token);
+        return 1;
+    }
+    return 0;
+}
+//  block_item_list2
+//  	: block_item block_item_list2
+//      | epsilon
+//  	;
+int block_item_list2(TOKEN** token){
+    if (block_item(token) == 1){
+        block_item_list2(token);
+        return 1;
     }
     return 1;
 }
 
-// <compound-statement> ::= "{" {<declaration>}* {<statement>}* "}"
+//  block_item
+//  	: declaration
+//  	| statement
+//  	;
+int block_item(TOKEN** token){
+    if (declaration(token) == 1){
+        return 1;
+    }
+    if (statement(token) == 1){
+        return 1;
+    }
+    return 0;
+}
+
+//  compound_statement
+//  	: '{' '}'
+//  	| '{'  block_item_list '}'
+//  	;
+//  
 int compound_statement(TOKEN** token){
     if ((*token)->punctType == LBRACE){
         consume_token(token);
-        declaration(token);
-        statement(token);
         if ((*token)->punctType == RBRACE){
             consume_token(token);
             return 1;
         }
-        else{
-            printf("Expected }\n");
-            exit(1);
-        }
-    }
-    else{
-        printf("Expected {\n");
-        exit(1);
-    }
-    return 1;
-}
-// <direct-declarator> ::= <identifier>
-//                       | "(" <declarator> ")"
-//                      {  "[" {<constant-expression>}? "]"
-//                       | "(" <parameter-type-list> ")"
-//                       | "(" {<identifier>}* ")"}*
-int direct_declarator(TOKEN** token){
-    if ((*token)->lexElem == IDNTFR){
-        if(look_ahead(token, 1)->punctType == LPAR){
-            if(look_ahead(token,2)->lexElem == IDNTFR){
-                printf("Not supported right now. Sorry\n");
+        if (block_item_list(token) == 1){
+            if ((*token)->punctType == RBRACE){
+                consume_token(token);
+                return 1;
+            }
+            else{
+                printf("Expected }");
                 exit(1);
             }
-            else if(look_ahead(token,2)->punctType == RPAR){
-                return 2;
-            }
+        }
+    }
+    printf("Expected {");
+    return 0;
+}
+
+//  direct_declarator
+//  	: IDENTIFIER direct_declarator2
+//  	| '(' declarator ')' direct_declarator2
+//  	;
+int direct_declarator(TOKEN** token){
+    if ((*token)->lexElem == IDNTFR){
+        consume_token(token);
+        if (direct_declarator2(token) == 1){
+            return 1;
         }
     }
     else if ((*token)->punctType == LPAR){
-        declarator(token);
-        if ((*token)->punctType == RPAR){
-            return 1;
-        }
-        else{
-            printf("Unmatched parentheses\n");
+        consume_token(token);
+        if (declarator(token) == 1){
+            if ((*token)->punctType == RPAR){
+                consume_token(token);
+                if (direct_declarator2(token) == 1){
+                    return 1;
+                }
+            }
+            printf("Mismatched parentheses\n");
             exit(1);
         }
     }
-    print_token(*token);
-    printf("Expected identifier\n");
+    printf("Expected direct_declarator\n");
     exit(1);
+}
+
+//  direct_declarator2
+//  	| [' ']' direct_declarator2
+//  	| [' '*' ']' direct_declarator2
+//  	| [' STATIC type_qualifier_list assignment_expression ']' direct_declarator2
+//  	| [' STATIC assignment_expression ']' direct_declarator2
+//  	| [' type_qualifier_list '*' ']' direct_declarator2
+//  	| [' type_qualifier_list STATIC assignment_expression ']' direct_declarator2
+//  	| [' type_qualifier_list assignment_expression ']' direct_declarator2
+//  	| [' type_qualifier_list ']' direct_declarator2
+//  	| [' assignment_expression ']' direct_declarator2
+//  	| (' parameter_type_list ')' direct_declarator2
+//  	| (' ')' direct_declarator2
+//  	| (' identifier_list ')' direct_declarator2
+//      | epsilon
+int direct_declarator2(TOKEN** token){
+    if ((*token)->punctType == LPAR){
+        consume_token(token);
+        if ((*token)->punctType == RPAR){
+            consume_token(token);
+            return direct_declarator2(token);
+        }
+    }
     return 1;
 }
-// <declarator> ::= {<pointer>}? <direct-declarator>
+
+//  declarator
+//  	: pointer direct_declarator
+//  	| direct_declarator
+//  	;
 int declarator(TOKEN** token){
     return direct_declarator(token);
 }
-// <type-specifier> ::= void
-//                    | char
-//                    | short
-//                    | int
-//                    | long
-//                    | float
-//                    | double
-//                    | signed
-//                    | unsigned
-//                    | <struct-or-union-specifier>
-//                    | <enum-specifier>
-//                    | <typedef-name>
+
+//  type_specifier
+//  	: VOID
+//  	| CHAR
+//  	| SHORT
+//  	| INT
+//  	| LONG
+//  	| FLOAT
+//  	| DOUBLE
+//  	| SIGNED
+//  	| UNSIGNED
+//  	| BOOL
+//  	| COMPLEX
+//  	| IMAGINARY	  	/* non-mandated extension */
+//  	| atomic_type_specifier
+//  	| struct_or_union_specifier
+//  	| enum_specifier
+//  	| TYPEDEF_NAME		/* after it has been defined as such */
+//  	;
 int type_specifier(TOKEN** token){
     if ((*token)->lexElem == KEYWRD){
         if((*token)->keywdType == VOID){
@@ -388,34 +592,42 @@ int type_specifier(TOKEN** token){
         return 0;
     }
 }
-// <declaration-specifier> ::= <storage-class-specifier>
-//                           | <type-specifier>
-//                           | <type-qualifier>
+//  declaration_specifiers
+//  	: storage_class_specifier declaration_specifiers
+//  	| storage_class_specifier
+//  	| type_specifier declaration_specifiers
+//  	| type_specifier
+//  	| type_qualifier declaration_specifiers
+//  	| type_qualifier
+//  	| function_specifier declaration_specifiers
+//  	| function_specifier
+//  	| alignment_specifier declaration_specifiers
+//  	| alignment_specifier
+//  	;
 int declaration_specifier(TOKEN** token){
-    //storage_class_specifier();
-    int tmp = type_specifier(token);
-    //type_qualifer();
-    return tmp;
+    if (type_specifier(token) == 1){
+        declaration_specifier(token);
+        return 1;
+    }
+    else{
+        return 0;
+    }
 }
-// <function-definition> ::= {<declaration-specifier>}* <declarator> {<declaration>}* <compound-statement>
+//  function_definition
+//  	: declaration_specifiers declarator declaration_list compound_statement
+//  	| declaration_specifiers declarator compound_statement
+//  	;
 int function_definition(TOKEN** token){
-    // C standard says we can have multiple declaration specifiers
-    for (;;){
-        int tmp = declaration_specifier(token);
-        if(tmp == 0) break;
+    if (declaration_specifier(token) != 1){
+        printf("Expected declaration specifier\n");
     }
-    if (declarator(token) == 2){
-        printf("global _");
-        print_token(*token);
-        printf("\n_");
-        print_token(*token);
-        consume_token(token);
-        consume_token(token);
-        consume_token(token);
-        printf(":\n");
+    
+    if (declarator(token) != 1){
+        printf("Expected declarator\n");
     }
-    declaration(token);
-    compound_statement(token);
+    if (compound_statement(token) != 1){
+        printf("Expected compound-statement\n");
+    }
     return 1;
 }
 

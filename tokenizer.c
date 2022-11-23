@@ -31,12 +31,6 @@ TOKEN* create_token(lexicalElement type, char* beginning, char* end){
     return token;
 };
 
-// Does this string match that string
-// Returns true if yes
-static bool match(char* this, char* that){
-    return strncmp(this, that, strlen(that)) == 0;
-};
-
 // Prints the current token
 void print_token(TOKEN* token){
     char* tmp = token->location;
@@ -118,15 +112,15 @@ punctuatorKind is_punctuator(char* start, char** startloc){
  * *****************************************************************************
  */
 
-TOKEN* tokenizer (char* scanner){
+TOKEN* tokenizer (char* scanner, long int file_size){
     // Create an empty TOKEN structure called head.
     // This points to the beginning of our linked list
     TOKEN head = {};
     // Create a pointer to the current token and initialize it
     // to the memory location of head.
     TOKEN* current = &head;
-
-    while (*scanner){
+    char *end_address = scanner + file_size;
+    while (scanner < end_address){
         // WHITESPACE
         // If the item is a space, skip it and move on
         // This is placed first since it is likely the most common
@@ -134,6 +128,10 @@ TOKEN* tokenizer (char* scanner){
         if (isspace(*scanner)){
             scanner++;
             continue;
+        }
+        if (*scanner == 9){
+            scanner++;
+            continue;            
         }
         // COMMENTS - INLINE
         // If scanner points to "//"
@@ -226,7 +224,7 @@ TOKEN* tokenizer (char* scanner){
             current->punctType = tmpPunct;
             continue;
         }
-
+        
         unexpected_token_error(scanner);
         // KEYWORDS
         scanner++;

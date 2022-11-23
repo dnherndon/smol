@@ -43,7 +43,7 @@ int main(int argc, char** argv){
     
     // Determine the location of the file pointer
     // This tells us how many bytes the file is
-    size_t file_size = ftell(input_file);
+    long int file_size = ftell(input_file);
 
     // Move the file pointer back to the beginning;
     fseek(input_file, 0, SEEK_SET);
@@ -86,7 +86,7 @@ int main(int argc, char** argv){
     fclose(input_file);
 
     
-    TOKEN* token = tokenizer(input_stream);
+    TOKEN* token = tokenizer(input_stream, file_size);
     //TOKEN* head_token = token;
     //while(token->lexElem != END) {
     //    printf("TOKEN: ");

@@ -108,8 +108,13 @@ struct TOKEN{
 };
 
 // ***** Tokenizer Function Prototypes *****
-TOKEN* tokenizer(char* scanner);
+TOKEN* tokenizer(char* scanner, long int file_size);
 void print_token(TOKEN* token);
+// Does this string match that string
+// Returns true if yes
+static bool match(char* this, char* that){
+    return strncmp(this, that, strlen(that)) == 0;
+};
 
 /*
  ************************
@@ -118,6 +123,7 @@ void print_token(TOKEN* token);
  */
 char* tokenizer_error(TOKEN* token);
 void unexpected_token_error(char* scanned);
+void expected_error(TOKEN** token);
 
 /*
  ****************
