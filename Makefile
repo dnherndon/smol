@@ -1,14 +1,14 @@
 smol: *.c
-	clang *.c -o smol
+	$(CC) *.c -o smol
 
 assemble: out.asm
 	nasm -f elf64 out.asm -o out
 
 all: ./test/test.c
-	clang *.c -o smol
+	$(CC) *.c -o smol
 	./smol ./test/test.c > out.asm
 	nasm -f elf64 out.asm -o out.o
-	clang out.o -o test.out
+	$(CC) out.o -o test.out
 
 test: smol
 	./test.sh

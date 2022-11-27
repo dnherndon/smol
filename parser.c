@@ -33,18 +33,31 @@ int assignment_expression(TOKEN** token);
 int conditional_expression(TOKEN** token);
 int conditional_expression2(TOKEN** token);
 int logical_or_expression(TOKEN** token);
+int logical_or_expression2(TOKEN** token);
 int logical_and_expression(TOKEN** token);
+int logical_and_expression2(TOKEN** token);
 int inclusive_or_expression(TOKEN** token);
+int inclusive_or_expression2(TOKEN** token);
 int exclusive_or_expression(TOKEN** token);
+int exclusive_or_expression2(TOKEN** token);
 int and_expression(TOKEN** token);
+int and_expression2(TOKEN** token);
 int equality_expression(TOKEN** token);
+int equality_expression2(TOKEN** token);
 int relational_expression(TOKEN** token);
+int relational_expression2(TOKEN** token);
 int shift_expression(TOKEN** token);
+int shift_expression2(TOKEN** token);
 int additive_expression(TOKEN** token);
+int additive_expression2(TOKEN** token);
 int multiplicative_expression(TOKEN** token);
+int multiplicative_expression2(TOKEN** token);
 int cast_expression(TOKEN** token);
+int cast_expression2(TOKEN** token);
 int unary_expression(TOKEN** token);
+int unary_expression2(TOKEN** token);
 int postfix_expression(TOKEN** token);
+int postfix_expression2(TOKEN** token);
 int primary_expression(TOKEN** token);
 int constant(TOKEN** token);
 int assignment_expression(TOKEN** token);
@@ -55,6 +68,21 @@ int init_declarator_list(TOKEN** token);
 int init_declarator_list2(TOKEN** token);
 int initializer(TOKEN** token);
 int init_declarator(TOKEN** token);
+int type_name(TOKEN** token);
+int initializer_list(TOKEN** token);
+int unary_operator(TOKEN** token);
+int argument_expression_list(TOKEN** token);
+
+// Place holders
+int type_name(TOKEN** token){
+    return 0;
+}
+int initializer_list(TOKEN** token){
+    return 0;
+}
+int argument_expression_list(TOKEN** token){
+    return 0;
+}
 
 // Look ahead some number of tokens
 TOKEN* look_ahead(TOKEN** token, int how_far){
@@ -144,108 +172,633 @@ int conditional_expression2(TOKEN** token){
     return 1;
 }
 //  logical_or_expression
-//  	: logical_and_expression
-//  	| logical_or_expression OR_OP logical_and_expression
+//  	: logical_and_expression logical_or_expression2
 //  	;
 int logical_or_expression(TOKEN** token){
-
+    if (logical_and_expression(token) == 1){
+        if (logical_or_expression2(token) == 1){
+            return 1;
+        }
+    }
+    return 0;
 }
-// <logical-and-expression> ::= <inclusive-or-expression> {"&&" <inclusive-or-expression>}*
+//  logical_or_expression2
+//  	| '||' logical_and_expression logical_or_expression2
+//      | epsilon
+//  	;
+int logical_or_expression2(TOKEN** token){
+    if ((*token)->punctType == LOGOR){
+        consume_token(token);
+        if (logical_and_expression(token) == 1){
+            if (logical_or_expression2(token) == 1){
+                return 1;
+            }
+        }
+    }
+    return 1;
+}
+//  logical_and_expression
+//  	: inclusive_or_expression logical_and_expression2
+//  	;
 int logical_and_expression(TOKEN** token){
-    inclusive_or_expression(token);
+    if (inclusive_or_expression(token) == 1){
+        if (logical_and_expression2(token) == 1){
+            return 1;
+        }
+    }
+    return 0;
+}
+//  logical_and_expression
+//  	| '&&' inclusive_or_expression logical_and_expression2
+//      | epsilon
+//  	;
+int logical_and_expression2(TOKEN** token){
+    if ((*token)->punctType == LOGAND){
+        consume_token(token);
+        if (inclusive_or_expression(token) == 1){
+            if (logical_and_expression2(token) == 1){
+                return 1;
+            }
+        }
+    }
     return 1;
 }
-// <inclusive-or-expression> ::= <exclusive-or-expression> {"|" <exclusive-or-expression>}*
+//  inclusive_or_expression
+//  	: exclusive_or_expression inclusive_or_expression2
+//  	;
 int inclusive_or_expression(TOKEN** token){
-    exclusive_or_expression(token);
+    if (exclusive_or_expression(token) == 1){
+        if (inclusive_or_expression2(token) == 1){
+            return 1;
+        }
+    }
+    return 0;
+}
+//  inclusive_or_expression
+//  	| '|' exclusive_or_expression inclusive_or_expression2
+//      | epsilon
+//  	;
+int inclusive_or_expression2(TOKEN** token){
+    if ((*token)->punctType == BITOR){
+        consume_token(token);
+        if (exclusive_or_expression(token) == 1){
+            if (inclusive_or_expression2(token) == 1){
+                return 1;
+            }
+        }
+    }
     return 1;
 }
-// <exclusive-or-expression> ::= <and-expression> {"^" <and-expression>}*
+//  exclusive_or_expression
+//  	: and_expression exclusive_or_expression2
+//  	;
 int exclusive_or_expression(TOKEN** token){
-    and_expression(token);
+    if (and_expression(token) == 1){
+        if (exclusive_or_expression2(token) == 1){
+            return 1;
+        }
+    }
+    return 0;
+}
+//  exclusive_or_expression2
+//  	: '^' and_expression exclusive_or_expression2
+//      | epsilon
+//  	;
+int exclusive_or_expression2(TOKEN** token){
+    if ((*token)->punctType == BITXOR){
+        consume_token(token);
+        if (and_expression(token) == 1){
+            if (exclusive_or_expression2(token) == 1){
+                return 1;
+            }
+        }
+    }
     return 1;
 }
-// <and-expression> ::= <equality-expression> {"&" <equality-expression>}*
+//  and_expression
+//  	: equality_expression and_expression2
+//  	;
 int and_expression(TOKEN** token){
-    equality_expression(token);
+    if (equality_expression(token) == 1){
+        if (and_expression2(token) == 1){
+            return 1;
+        }
+    }
+    return 0;
+}
+//  and_expression2
+//  	| '&' equality_expression and_expression2
+//      | epsilon
+//  	;
+int and_expression2(TOKEN** token){
+    if ((*token)->punctType == BITAND){
+        consume_token(token);
+        if (equality_expression(token) == 1){
+            if (and_expression2(token) == 1){
+                return 1;
+            }
+        }
+    }
     return 1;
 }
-
-// <equality-expression> ::= <relational-expression> {"==" <relational-expression> | "!=" <relational-expression>}*
+//  equality_expression
+//  	: relational_expression equality_expression2
+//  	;
 int equality_expression(TOKEN** token){
-    relational_expression(token);
+    if (relational_expression(token) == 1){
+        if (equality_expression2(token) == 1){
+            return 1;
+        }
+    }
+    return 0;
+}
+//  equality_expression2
+//  	| '==' relational_expression equality_expression2
+//  	| '!=' relational_expression equality_expression2
+//      | epsilon
+//  	;
+int equality_expression2(TOKEN** token){
+    if ((*token)->punctType == EQUIV){
+        consume_token(token);
+        if (relational_expression(token) == 1){
+            if (equality_expression2(token) == 1){
+                return 1;
+            }
+        }
+    }
+    else if ((*token)->punctType == NOTEQUIV){
+        consume_token(token);
+        if (relational_expression(token) == 1){
+            if (equality_expression2(token) == 1){
+                return 1;
+            }
+        }
+    }
     return 1;
 }
-// <relational-expression> ::= <shift-expression>
-//                          {| "<" <shift-expression>
-//                           | ">" <shift-expression>
-//                           | "<=" <shift-expression>
-//                           | ">=" <shift-expression>}*
+//  relational_expression
+//  	: shift_expression relational_expression2
+//  	;
 int relational_expression(TOKEN** token){
-    shift_expression(token);
+    if (shift_expression(token) == 1){
+        if (relational_expression2(token) == 1){
+            return 1;
+        }
+    }
+    return 0;
+}
+//  relational_expression2
+//  	| '<' shift_expression relational_expression2
+//  	| '>' shift_expression relational_expression2
+//  	| '<=' shift_expression relational_expression2
+//  	| '>=' shift_expression relational_expression2
+//      | epsilon
+//  	;
+int relational_expression2(TOKEN** token){
+    if ((*token)->punctType == LT){
+        consume_token(token);
+        if (shift_expression(token) == 1){
+            if (relational_expression2(token) == 1){
+                return 1;
+            }
+        }
+    }
+    else if ((*token)->punctType == GT){
+        consume_token(token);
+        if (shift_expression(token) == 1){
+            if (relational_expression2(token) == 1){
+                return 1;
+            }
+        }
+    }
+    else if ((*token)->punctType == LE){
+        consume_token(token);
+        if (shift_expression(token) == 1){
+            if (relational_expression2(token) == 1){
+                return 1;
+            }
+        }
+    }
+    else if ((*token)->punctType == GE){
+        consume_token(token);
+        if (shift_expression(token) == 1){
+            if (relational_expression2(token) == 1){
+                return 1;
+            }
+        }
+    }
     return 1;
 }
-// <shift-expression> ::= <additive-expression>
-//                     {| "<<" <additive-expression>
-//                      | ">>" <additive-expression>}*
+//  shift_expression
+//  	: additive_expression shift_expression2
+//  	;
 int shift_expression(TOKEN** token){
-    additive_expression(token);
+    if (additive_expression(token) == 1){
+        if (shift_expression2(token) == 1){
+            return 1;
+        }
+    }
+    return 0;
+}
+//  shift_expression2
+//  	: '<<' additive_expression shift_expression2
+//  	| '>>' additive_expression shift_expression2
+//      | epsilon
+//  	;
+int shift_expression2(TOKEN** token){
+    if ((*token)->punctType == LSHFT){
+        consume_token(token);
+        if (additive_expression(token) == 1){
+            if (shift_expression2(token) == 1){
+                return 1;
+            }
+        }
+    }
+    if ((*token)->punctType == RSHFT){
+        consume_token(token);
+        if (additive_expression(token) == 1){
+            if (shift_expression2(token) == 1){
+                return 1;
+            }
+        }
+    }
     return 1;
 }
-// <additive-expression> ::= <multiplicative-expression>
-//                        {| "+" <multiplicative-expression>
-//                         | "-" <multiplicative-expression>}*
+//  additive_expression
+//  	: multiplicative_expression additive_expression2
+//  	;
 int additive_expression(TOKEN** token){
-    multiplicative_expression(token);
+    if (multiplicative_expression(token) == 1){
+        if (additive_expression2(token) == 1){
+            return 1;
+        }
+    }
+    return 0;
+}
+//  additive_expression2
+//  	: '+' multiplicative_expression additive_expression2
+//  	| '-' multiplicative_expression additive_expression2
+//      | epsilon
+//  	;
+int additive_expression2(TOKEN** token){
+    if ((*token)->punctType == PLUS){
+        consume_token(token);
+        if (multiplicative_expression(token) == 1){
+            if (additive_expression2(token) == 1){
+                return 1;
+            }
+        }
+    }
+    else if ((*token)->punctType == MINUS){
+        consume_token(token);
+        if (multiplicative_expression(token) == 1){
+            if (additive_expression2(token) == 1){
+                return 1;
+            }
+        }
+    }
     return 1;
 }
-// <multiplicative-expression> ::= <cast-expression>
-//                              {| "*" <cast-expression>
-//                               | "/" <cast-expression>
-//                               | "%" <cast-expression>}*
+//  multiplicative_expression
+//  	: cast_expression multiplicative_expression2
+//  	;
 int multiplicative_expression(TOKEN** token){
-    cast_expression(token);
-    return 1;
+    if (cast_expression(token) == 1){
+        if (multiplicative_expression2(token) == 1){
+            return 1;
+        }
+    }
+    return 0;
 }
-// <cast-expression> ::= <unary-expression>
-//                     | ( <type-name> ) <cast-expression>
+//  multiplicative_expression2
+//  	: '*' cast_expression multiplicative_expression2
+//  	| '/' cast_expression multiplicative_expression2
+//  	| '%' cast_expression multiplicative_expression2
+//      | epsilon
+//  	;
+int multiplicative_expression2(TOKEN** token){
+    if ((*token)->punctType == STAR){
+        consume_token(token);
+        if (cast_expression(token) == 1){
+            if (multiplicative_expression2(token) == 1){
+                return 1;
+            }
+        }
+    }
+    if ((*token)->punctType == FWDSLSH){
+        consume_token(token);
+        if (cast_expression(token) == 1){
+            if (multiplicative_expression2(token) == 1){
+                return 1;
+            }
+        }
+    }
+    if ((*token)->punctType == PERCENT){
+        consume_token(token);
+        if (cast_expression(token) == 1){
+            if (multiplicative_expression2(token) == 1){
+                return 1;
+            }
+        }
+    }
+}
+//  cast_expression
+//  	: unary_expression
+//  	| '(' type_name ')' cast_expression
+//  	;
 int cast_expression(TOKEN** token){
-    unary_expression(token);
-    return 1;
+    if (unary_expression(token) == 1){
+        return 1;
+    }
+    else if ((*token)->punctType == LPAR){
+        consume_token(token);
+        if (type_name(token) == 1){
+            if ((*token)->punctType == RPAR){
+                consume_token(token);
+                if (cast_expression(token) == 1){
+                    return 1;
+                }
+            }
+            printf("Mismatched parentheses\n");
+            exit(1);
+        }
+    }
+    return 0;
 }
-// <unary-expression> ::= <postfix-expression>
-//                      | ++ <unary-expression>
-//                      | -- <unary-expression>
-//                      | <unary-operator> <cast-expression>
-//                      | sizeof <unary-expression>
-//                      | sizeof <type-name>
+//  unary_expression
+//  	: postfix_expression
+//  	| '++' unary_expression
+//  	| '--' unary_expression
+//  	| unary_operator cast_expression
+//  	| 'sizeof' unary_expression
+//  	| 'sizeof' '(' type_name ')'
+//  	| 'alignof' '(' type_name ')'
+//  	;
 int unary_expression(TOKEN** token){
-    postfix_expression(token);
-    return 1;
+    if (postfix_expression(token) == 1){
+        return 1;
+    }
+    else if ((*token)->punctType == INCREMENT){
+        consume_token(token);
+        if (unary_expression(token) == 1){
+            return 1;
+        }
+    }
+    else if ((*token)->punctType == DECREMENT){
+        consume_token(token);
+        if (unary_expression(token) == 1){
+            return 1;
+        }
+    }
+    else if (unary_operator(token) == 1){
+        if (cast_expression(token) == 1){
+            return 1;
+        }
+    }
+    else if ((*token)->keywdType == SIZEOF){
+        consume_token(token);
+        if (unary_expression(token) == 1){
+            return 1;
+        }
+    }
+    else if ((*token)->keywdType == SIZEOF){
+        consume_token(token);
+        if ((*token)->punctType == LPAR){
+            consume_token(token);
+            if (type_name(token) == 1){
+                if((*token)->punctType == RPAR){
+                    consume_token(token);
+                    return 1;
+                }
+                printf("Mismatched parentheses\n");
+                exit(1);
+            }
+        }
+    }
+    else if ((*token)->keywdType == _ALIGNOF){
+        consume_token(token);
+        if ((*token)->punctType == LPAR){
+            consume_token(token);
+            if (type_name(token) == 1){
+                if((*token)->punctType == RPAR){
+                    consume_token(token);
+                    return 1;
+                }
+                printf("Mismatched parentheses\n");
+                exit(1);
+            }
+        }
+    }
+    return 0;
 }
-// <postfix-expression> ::= <primary-expression>
-//                       {| "[" <expression> ]
-//                        | "(" {<assignment-expression>}* )
-//                        | "."  <identifier>
-//                        | "->" <identifier>
-//                        | "++"
-//                        | "--"}*
+//  unary_operator
+//  	: '&'
+//  	| '*'
+//  	| '+'
+//  	| '-'
+//  	| '~'
+//  	| '!'
+//  	;
+int unary_operator(TOKEN** token){
+    if ((*token)->punctType == BITAND){
+        consume_token(token);
+        return 1;
+    }
+    else if ((*token)->punctType == STAR){
+        consume_token(token);
+        return 1;
+    }
+    else if ((*token)->punctType == PLUS){
+        consume_token(token);
+        return 1;
+    }
+    else if ((*token)->punctType == MINUS){
+        consume_token(token);
+        return 1;
+    }
+    else if ((*token)->punctType == BITNOT){
+        consume_token(token);
+        return 1;
+    }
+    else if ((*token)->punctType == EXCLAMATION){
+        consume_token(token);
+        return 1;
+    }
+    return 0;
+}
+//  postfix_expression
+//  	: primary_expression postfix_expression2
+//  	| '(' type_name ')' '{' initializer_list '}' postfix_expression2
+//  	| '(' type_name ')' '{' initializer_list ',' '}' postfix_expression2
+//  	;
 int postfix_expression(TOKEN** token){
-    primary_expression(token);
+    if (primary_expression(token) == 1){
+        if (postfix_expression2(token) == 1){
+            return 1;
+        }
+    }
+    else if ((*token)->punctType == LPAR){
+        consume_token(token);
+        if (type_name(token) == 1){
+            if ((*token)->punctType == RPAR){
+                consume_token(token);
+                if ((*token)->punctType == LBRACE){
+                    consume_token(token);
+                    if (initializer_list(token) == 1){
+                        if ((*token)->punctType == RBRACE){
+                            consume_token(token);
+                            if (postfix_expression2(token) == 1){
+                                return 1;
+                            }
+                        }
+                        else if ((*token)->punctType == COMMA){
+                            consume_token(token);
+                            if ((*token)->punctType == RBRACE){
+                                consume_token(token);
+                                if (postfix_expression2(token) == 1){
+                                    return 1;
+                                }
+                            }
+                            else{
+                                printf("Mismatched braces\n");
+                                exit(1);
+                            }
+                        }
+                        else{
+                            printf("Expected brace or comma\n");
+                            exit(1);
+                        }
+                    }
+                }
+            }
+            else{
+                printf("Mismatched parentheses\n");
+                exit(1);
+            }
+        }
+    }
+
+}
+//  postfix_expression2
+//  	| '[' expression ']' postfix_expression2
+//  	| '(' ')' postfix_expression2
+//  	| '(' argument_expression_list ')' postfix_expression2
+//  	| '.' IDENTIFIER postfix_expression2
+//  	| '->' IDENTIFIER postfix_expression2
+//  	| '++' postfix_expression2
+//  	| '--' postfix_expression2
+//      | epsilon
+//  	;
+int postfix_expression2(TOKEN** token){
+    if ((*token)->punctType == LBRACK){
+        consume_token(token);
+        if (expression(token) == 1){
+            if ((*token)->punctType == RBRACK){
+                consume_token(token);
+                if (postfix_expression2(token) == 1){
+                    return 1;
+                }
+            }
+            else{
+                printf("Mismatched brackets\n");
+                exit(1);
+            }
+        }
+    }
+    else if ((*token)->punctType == LPAR){
+        consume_token(token);
+        if((*token)->punctType == RPAR){
+            consume_token(token);
+            if (postfix_expression2(token) == 1){
+                return 1;
+            }
+        }
+        else if (argument_expression_list(token) == 1){
+            if ((*token)->punctType == RPAR){
+                consume_token(token);
+                if (postfix_expression2(token) == 1){
+                    return 1;
+                }
+            }
+            printf("Mismatched parentheses\n");
+            exit(1);
+        }
+        else{
+            printf("Mismatched parentheses\n");
+            exit(1);
+        }
+    }
+    else if ((*token)->punctType == DOT){
+        consume_token(token);
+        if ((*token)->lexElem == IDNTFR){
+            consume_token(token);
+            if (postfix_expression2(token) == 1){
+                return 1;
+            }
+        }
+        return 0;
+    }
+    else if ((*token)->punctType == DEREFERENCE){
+        consume_token(token);
+        if ((*token)->lexElem == IDNTFR){
+            consume_token(token);
+            if (postfix_expression2(token) == 1){
+                return 1;
+            }
+        }
+        return 0;
+    }
+    else if ((*token)->punctType == INCREMENT){
+        consume_token(token);
+        if (postfix_expression2(token) == 1){
+            return 1;
+        }
+        return 0;
+    }
+    else if ((*token)->punctType == DECREMENT){
+        consume_token(token);
+        if (postfix_expression2(token) == 1){
+            return 1;
+        }
+        return 0;
+    }
     return 1;
 }
-// <primary-expression> ::= <identifier>
-//                        | <constant>
-//                        | <string>
-//                        | ( <expression> )
+//  primary_expression
+//  	: IDENTIFIER
+//  	| constant
+//  	| string //TODO:
+//  	| '(' expression ')'
+//  	| generic_selection //TODO:
+//  	;
 int primary_expression(TOKEN** token){
-    constant(token);
-    return 1;
+    if ((*token)->lexElem == IDNTFR){
+        consume_token(token);
+        return 1;
+    }
+    else if (constant(token) == 1){
+        return 1;
+    }
+    else if ((*token)->punctType == LPAR){
+        consume_token(token);
+        if (expression(token) == 1){
+            if((*token)->punctType == RPAR){
+                consume_token(token);
+                return 1;
+            }
+            else{
+                printf("Mismatched parentheses\n");
+                exit(1);
+            }
+        }
+    }
+    return 0;
 }
-// <constant> ::= <integer-constant>
-//              | <character-constant>
-//              | <floating-constant>
-//              | <enumeration-constant>
+//  constant
+//  	: I_CONSTANT		/* includes character_constant */
+//  	| F_CONSTANT //TODO:
+//  	| ENUMERATION_CONSTANT	//TODO: /* after it has been defined as such */
+//  	;
 int constant(TOKEN** token){
     if ((*token)->constType == INTEGERS){
         consume_token(token);
