@@ -94,7 +94,7 @@ struct TOKEN{
     lexicalElement lexElem;     // The type of token (lexical element)
     int length;                 // The length of the token
     char* location;             // Location of the token
-
+    int tokenLineNumber;        // Token line number
 
 // ***** KEYWORDS *****
     keywordKind keywdType;
@@ -102,6 +102,7 @@ struct TOKEN{
  // ***** CONSTANTS *****
     constantKind constType;
     integerKind integerType;
+    unsigned long constantVal;
 
 // ***** PUNCTUATORS *****
     punctuatorKind punctType;
@@ -112,18 +113,8 @@ TOKEN* tokenizer(char* scanner, long int file_size);
 void print_token(TOKEN* token);
 // Does this string match that string
 // Returns true if yes
-static bool match(char* this, char* that){
-    return strncmp(this, that, strlen(that)) == 0;
-};
+// static bool match(char* this, char* that);
 
-/*
- ************************
- *    ERROR HANDLING    *
- * **********************
- */
-char* tokenizer_error(TOKEN* token);
-void unexpected_token_error(char* scanned);
-void expected_error(TOKEN** token);
 
 /*
  ****************
@@ -133,70 +124,35 @@ void expected_error(TOKEN** token);
 typedef struct NODE NODE;
 
 typedef enum{
-    TRANSLATION_UNIT,
-    EXTERNAL_DECLARATION,
-    FUNCTION_DEFINITION,
-    DECLARATION_SPECIFIER,
-    STORAGE_CLASS_SPECIFIER,
-    TYPE_SPECIFIER, 
-    STRUCT_OR_UNION_SPECIFIER,
-    STRUCT_OR_UNION,
-    STRUCT_DECLARATION,
-    SPECIFIER_QUALIFIER,
-    STRUCT_DECLARATOR_LIST,
-    STRUCT_DECLARATOR,
-    DECLARATOR,
-    POINTER,
-    TYPE_QUALIFIER,
-    DIRECT_DECLARATOR,
-    CONSTANT_EXPRESSION,
-    CONDITIONAL_EXPRESSION,
-    LOGICAL_OR_EXPRESSION,
-    LOGICAL_AND_EXPRESSION,
-    INCLUSIVE_OR_EXPRESSION,
-    EXCLUSIVE_OR_EXPRESSION,
-    AND_EXPRESSION,
-    EQUALITY_EXPRESSION,
-    RELATIONAL_EXPRESSION,
-    SHIFT_EXPRESSION,
-    ADDITIVE_EXPRESSION,
-    MULTIPLICATIVE_EXPRESSION,
-    CAST_EXPRESSION,
-    UNARY_EXPRESSION,
-    POSTFIX_EXPRESSION,
-    PRIMARY_EXPRESSION,
-    CONSTANT, 
-    EXPRESSION,
-    ASSIGNMENT_EXPRESSION,
-    ASSIGNMENT_OPERATOR, 
-    UNARY_OPERATOR,
-    TYPE_NAME,
-    PARAMETER_TYPE_LIST,
-    PARAMETER_LIST, 
-    PARAMETER_DECLARATION,
-    ABSTRACT_DECLARATOR, 
-    DIRECT_ABSTRACT_DECLARATOR,
-    ENUM_SPECIFIER, 
-    ENUMERATOR_LIST,
-    ENUMERATOR,
-    TYPEDEF_NAME,
-    DECLARATION,
-    INIT_DECLARATOR,
-    INITIALIZER,
-    INITIALIZER_LIST,
-    COMPOUND_STATEMENT,
-    STATEMENT,
-    LABELED_STATEMENT,
-    EXPRESSION_STATEMENT,
-    SELECTION_STATEMENT,
-    ITERATION_STATEMENT,
-    JUMP_STATEMENT
+    NODE_NULL,
+    NODE_ADD,    // +
+    NODE_MUL,    // *
+    NODE_INT,    // Integer
+    NODE_END
 }nodeKind;
 
 struct NODE{
-    NODE* next;
     nodeKind kind;
-    int64_t constantVal;
+    NODE* left;
+    NODE* right;
+    int constantVal;
 };
 
 NODE* parse(TOKEN* token);
+
+/*
+ ***********************
+ *    CODE GENERATOR   *
+ * *********************
+ */
+int code_generator(NODE* node);
+
+/*
+ ************************
+ *    ERROR HANDLING    *
+ * **********************
+ */
+char* tokenizer_error(TOKEN* token);
+void unexpected_token_error(char* scanned);
+void expected_error(TOKEN** token);
+void errorAt(TOKEN** token);

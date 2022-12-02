@@ -1,5 +1,11 @@
-smol: *.c
-	$(CC) *.c -o smol
+CFLAGS=
+SRCS=$(wildcard *.c)
+OBJS=$(SRCS:.c=.o)
+CC=clang
+
+smol: $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $^
+	rm -f *.tmp
 
 assemble: out.asm
 	nasm -f elf64 out.asm -o out
@@ -14,10 +20,7 @@ test: smol
 	./test.sh
 
 clean:
-	rm -f smol
-	rm -f *.out
-	rm -f *.o
-	rm -f *.asm
+	rm -f smol *.out *.o *.asm *.tmp
 
 clean_test:
 	rm -f tmp* tmp.* *.o *.exe

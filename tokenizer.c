@@ -16,7 +16,13 @@
  */
 #include "smol.h"
 
-TOKEN* create_token(lexicalElement type, char* beginning, char* end){
+// Does this string match that string
+// Returns true if yes
+static bool match(char* this, char* that){
+    return strncmp(this, that, strlen(that)) == 0;
+};
+
+TOKEN* create_token(lexicalElement type, char* beginning, char* end, int lineNumber){
     // This statement allocates zero initialized (calloc vs. malloc)
     // memory. It allocates 1 block the size of the TOKEN data structure.
     // token is then a pointer to this new spot in memory.
@@ -27,6 +33,8 @@ TOKEN* create_token(lexicalElement type, char* beginning, char* end){
     token->location = beginning;
     // The length of the token is simply the ending subtracted from the beginning
     token->length = end - beginning;
+    // Token line number
+    token->tokenLineNumber = lineNumber;
     // We then return the ppinter to this spot in memory
     return token;
 };
@@ -120,30 +128,40 @@ TOKEN* tokenizer (char* scanner, long int file_size){
     // to the memory location of head.
     TOKEN* current = &head;
     char *end_address = scanner + file_size;
+    // Line number counter
+    int lineNumber = 1;
     while (scanner < end_address){
-        // WHITESPACE
+        /*
+         ********************
+         *    WHITESPACE    *
+         * ******************
+         */
         // If the item is a space, skip it and move on
         // This is placed first since it is likely the most common
         // occurrence in a source code file
-        if (isspace(*scanner)){
+        if(*scanner == ' '){
             scanner++;
             continue;
         }
-        if (*scanner == 9){
+        else if (*scanner == '\t'){
             scanner++;
-            continue;            
+            continue;
         }
-        // COMMENTS - INLINE
-        // If scanner points to "//"
-        if (match(scanner,"//")){
-            // Move the scanner down 2 spots to move over '//'
-            scanner += 2;
-            char* p = scanner;
-            // Now just increment the scanner until end of line is detected
-            while (!match(scanner,"\n")){
-                scanner++;
-            }
-            current = current->next = create_token(COMMENT, p, scanner);
+        else if (*scanner == '\n'){
+            scanner++;
+            lineNumber++;
+            continue;
+        }
+        else if (*scanner == '\v'){
+            scanner++;
+            continue;
+        }
+        else if (*scanner == '\f'){
+            scanner++;
+            continue;
+        }
+        else if (*scanner == '\r'){
+            scanner++;
             continue;
         }
         /*
@@ -151,16 +169,34 @@ TOKEN* tokenizer (char* scanner, long int file_size){
          *    COMMENTS    *
          * ****************
          */
-        // Block Comments
+        // COMMENTS - INLINE
+        // If scanner points to "//"
+        if (match(scanner,"//")){
+            // Move the scanner down 2 spots to move over '//'
+            scanner += 2;
+            //char* p = scanner;
+            // Now just increment the scanner until end of line is detected
+            while (!match(scanner,"\n")){
+                scanner++;
+            }
+            //current = current->next = create_token(COMMENT, p, scanner);
+            continue;
+        }
+        // COMMENTS - BLOCK
         // If scanner points to "/*" it is the beginning of a block comment
         if (match(scanner, "/*")){
             scanner += 2;
-            char* p = scanner;
+            //char* p = scanner;
             // Increment the scanner the block comment is closed
             while(!match(scanner, "*/")){
                 scanner++;
+                if (scanner == end_address){
+                    printf("Unterminated block comment\n");
+                    exit(1);
+                    break;
+                }
             }
-            current = current->next = create_token(COMMENT, p, scanner);
+            //current = current->next = create_token(COMMENT, p, scanner);
             // Move beyond the "*/"
             scanner += 2;
             continue;
@@ -175,7 +211,7 @@ TOKEN* tokenizer (char* scanner, long int file_size){
             char* p = scanner;
             scanner += 2;
             while(isxdigit(*scanner)) scanner++;
-            current = current->next = create_token(CONSTANTS, p, scanner);
+            current = current->next = create_token(CONSTANTS, p, scanner, lineNumber);
             current->constType = INTEGERS;
             current->integerType = HEX;
             continue;
@@ -184,9 +220,10 @@ TOKEN* tokenizer (char* scanner, long int file_size){
         if (isdigit(*scanner)){
             char* p = scanner;
             while(isdigit(*scanner)) scanner ++;
-            current = current->next = create_token(CONSTANTS, p, scanner);
+            current = current->next = create_token(CONSTANTS, p, scanner, lineNumber);
             current->constType = INTEGERS;
             current->integerType = DIGIT;
+            current->constantVal = strtoul(p,&p,10);
             continue;
         }
         /*
@@ -204,10 +241,10 @@ TOKEN* tokenizer (char* scanner, long int file_size){
             keywordKind type = 0;
             type = is_keyword(p, scanner);
             if (type == NOTKWD){
-                current = current->next = create_token(IDNTFR, p, scanner);
+                current = current->next = create_token(IDNTFR, p, scanner, lineNumber);
             }
             else{
-                current = current->next = create_token(KEYWRD, p, scanner);
+                current = current->next = create_token(KEYWRD, p, scanner, lineNumber);
                 current->keywdType = type;
             }
             continue;
@@ -220,7 +257,7 @@ TOKEN* tokenizer (char* scanner, long int file_size){
         char* p = scanner;
         punctuatorKind tmpPunct = is_punctuator(scanner, &scanner);
         if (tmpPunct != NOTPUNCT){
-            current = current->next = create_token(PUNCTR, p, scanner);
+            current = current->next = create_token(PUNCTR, p, scanner, lineNumber);
             current->punctType = tmpPunct;
             continue;
         }
@@ -229,6 +266,6 @@ TOKEN* tokenizer (char* scanner, long int file_size){
         // KEYWORDS
         scanner++;
     }
-    current = current->next = create_token(END, scanner, scanner);
+    current = current->next = create_token(END, scanner, scanner, lineNumber);
     return head.next;
 };

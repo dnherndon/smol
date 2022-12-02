@@ -20,3 +20,6 @@ void unexpected_token_error(char* scanned){
     printf("Unexpected token: %c\n", *scanned);
     exit(1);
 }
+void errorAt(TOKEN** token){
+    printf("Error near line %d\n",(*token)->tokenLineNumber);
+}

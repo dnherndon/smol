@@ -14,3 +14,50 @@
  *   You should have received a copy of the GNU General Public License
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+#include "smol.h"
+
+void generateRecursive(NODE* node){
+    switch (node->kind){
+    case NODE_INT:
+        printf("    mov rax, %d\n", node->constantVal);
+        return;
+    case NODE_NULL:
+        break;
+    case NODE_ADD:
+        break;
+    case NODE_MUL:
+        break;
+    case NODE_END:
+        break;
+    }
+
+    generateRecursive(node->right);
+    printf("    push rax\n");
+    generateRecursive(node->left);
+    printf("    pop rbx\n");
+
+    switch (node->kind){
+    case NODE_ADD:
+        printf("    add rax, rbx\n");
+        return;
+    case NODE_MUL:
+        printf("    mul rbx\n");
+        return;
+    case NODE_INT:
+        break;
+    case NODE_NULL:
+        break;
+    case NODE_END:
+        break;
+    }
+
+}
+
+int code_generator(NODE* node){
+    printf("global main\n");
+    printf("main:\n");
+    generateRecursive(node);
+    printf("    ret\n");
+    return 1;
+}

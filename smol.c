@@ -56,7 +56,7 @@ int main(int argc, char** argv){
     }
     
     // Create a pointer to the beginning of the buffer
-    char* input_stream = buffer;
+    char* inputStream = buffer;
 
     // Label to determine how many bytes have been read from the file
     size_t bytes_read = 0;
@@ -86,16 +86,13 @@ int main(int argc, char** argv){
     fclose(input_file);
 
     
-    TOKEN* token = tokenizer(input_stream, file_size);
-    //TOKEN* head_token = token;
-    //while(token->lexElem != END) {
-    //    printf("TOKEN: ");
-    //    print_token(token);
-    //    printf("\n");
-    //    token = token->next;
-    //}
+    TOKEN* token = tokenizer(inputStream, file_size);
+
     // Call Parser
-    NODE* ast_node = parse(token);
+    NODE* node = parse(token);
+    
     // Call Code generator
+    code_generator(node);
+
     return 0;
 }
