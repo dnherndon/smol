@@ -477,11 +477,12 @@ NODE** additive_expression(TOKEN** token, NODE** node){
 NODE** additive_expression2(TOKEN** token, NODE** node){
     if ((*token)->punctType == PLUS){
         NODE* temp = calloc(1, sizeof(NODE));
-        temp->kind = NODE_ADD;
         temp->left = (*node);
+        temp->kind = NODE_ADD;
         consume_token(token);
         if (multiplicative_expression(token, node) != NULL){
             temp->right = (*node);
+            (*node) = temp;
             if (additive_expression2(token, node) != NULL){
                 return node;
             }
@@ -525,11 +526,12 @@ NODE** multiplicative_expression(TOKEN** token, NODE** node){
 NODE** multiplicative_expression2(TOKEN** token, NODE** node){
     if ((*token)->punctType == STAR){
         NODE* temp = calloc(1, sizeof(NODE));
-        temp->kind = NODE_ADD;
         temp->left = (*node);
+        temp->kind = NODE_MUL;
         consume_token(token);
         if (cast_expression(token, node) != NULL){
             temp->right = (*node);
+            (*node) = temp;
             if (multiplicative_expression2(token, node) != NULL){
                 return node;
             }
@@ -1352,11 +1354,10 @@ NODE** translation_unit2(TOKEN** token, NODE** node){
 NODE* parse(TOKEN* token){
     NODE head = {};
     NODE* node = &head;
-    NODE* tmp = node;
     for(;;){
         if (translation_unit(&token, &node) == NULL){
             break;
         }
     }
-    return tmp;
+    return node;
 }
