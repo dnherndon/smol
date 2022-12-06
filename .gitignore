@@ -1,8 +1,6 @@
 *.txt
 smol
-test/test.c
 The syntax of C in Backus-Naur form.html
-test/*
 The syntax of C in Backus-Naur form_files/js
 .vscode/settings.json
 *.o

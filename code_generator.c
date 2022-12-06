@@ -17,32 +17,70 @@
 
 #include "smol.h"
 
+FILE *out;
+
+void emitCode(const char* format, ...){
+    va_list args;
+    va_start(args, format);
+    vfprintf(out, format, args);
+    va_end(args);
+}
+
 void generateRecursive(NODE* node){
+    if (node == NULL){
+        printf("No code to generate for now...\n");
+        exit(1);
+    }
     switch (node->kind){
     case NODE_INT:
-        printf("    mov rax, %d\n", node->constantVal);
+        emitCode("    mov rax, %d\n", node->constantVal);
+        return;
+    case NODE_NEGATE:
+        generateRecursive(node->left);
+        emitCode("    neg rax\n");
         return;
     case NODE_NULL:
-        break;
+        return;
     case NODE_ADD:
+        break;
+    case NODE_SUB:
         break;
     case NODE_MUL:
         break;
     case NODE_END:
+        break;
+    case NODE_EQUIV:
+        break;
+    case NODE_NEQUIV:
+        break;
+    case NODE_LOGAND:
         break;
     }
 
+    
     generateRecursive(node->right);
-    printf("    push rax\n");
+    emitCode("    push rax\n");
     generateRecursive(node->left);
-    printf("    pop rbx\n");
+    emitCode("    pop rcx\n");
 
     switch (node->kind){
-    case NODE_ADD:
-        printf("    add rax, rbx\n");
+        case NODE_ADD:                          // +
+        emitCode("    add rax, rcx\n");
         return;
-    case NODE_MUL:
-        printf("    mul rbx\n");
+    case NODE_SUB:                          // -
+        emitCode("    sub rax, rcx\n");
+        return;
+    case NODE_MUL:                          // *
+        emitCode("    mul rcx\n");
+        return;
+    case NODE_DIV:                          // /
+        emitCode("    xor rdx, rdx\n");
+        emitCode("    idiv rcx\n");
+        return;
+    case NODE_MOD:
+        emitCode("    xor rdx, rdx\n");
+        emitCode("    idiv rcx\n");
+        emitCode("    mov rax, rdx\n");
         return;
     case NODE_INT:
         break;
@@ -50,14 +88,27 @@ void generateRecursive(NODE* node){
         break;
     case NODE_END:
         break;
+    case NODE_EQUIV:
+        emitCode("    cmp rax, rcx\n");
+        emitCode("    sete al\n");
+        emitCode("    movzx rax, al\n");
+        return;
+    case NODE_NEQUIV:
+        emitCode("    cmp rax, rcx\n");
+        emitCode("    setne al\n");
+        emitCode("    movzx rax, al\n");
+        break;
+    case NODE_LOGAND:
+        return;
     }
 
 }
 
-int code_generator(NODE* node){
-    printf("global main\n");
-    printf("main:\n");
+int code_generator(NODE* node, FILE* outputFile){
+    out = outputFile;
+    emitCode("global main\n");
+    emitCode("main:\n");
     generateRecursive(node);
-    printf("    ret\n");
+    emitCode("    ret\n");
     return 1;
 }

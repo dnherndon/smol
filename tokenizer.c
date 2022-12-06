@@ -16,13 +16,7 @@
  */
 #include "smol.h"
 
-// Does this string match that string
-// Returns true if yes
-static bool match(char* this, char* that){
-    return strncmp(this, that, strlen(that)) == 0;
-};
-
-TOKEN* create_token(lexicalElement type, char* beginning, char* end, int lineNumber){
+TOKEN* create_token(lexicalElement type, char* beginning, char* end, int lineNumber, char* linePos){
     // This statement allocates zero initialized (calloc vs. malloc)
     // memory. It allocates 1 block the size of the TOKEN data structure.
     // token is then a pointer to this new spot in memory.
@@ -35,6 +29,8 @@ TOKEN* create_token(lexicalElement type, char* beginning, char* end, int lineNum
     token->length = end - beginning;
     // Token line number
     token->tokenLineNumber = lineNumber;
+    // Token beginning position of the current line
+    token->tokenLinePos = linePos;
     // We then return the ppinter to this spot in memory
     return token;
 };
@@ -130,6 +126,7 @@ TOKEN* tokenizer (char* scanner, long int file_size){
     char *end_address = scanner + file_size;
     // Line number counter
     int lineNumber = 1;
+    char* currentLinePos = scanner;
     while (scanner < end_address){
         /*
          ********************
@@ -150,6 +147,7 @@ TOKEN* tokenizer (char* scanner, long int file_size){
         else if (*scanner == '\n'){
             scanner++;
             lineNumber++;
+            currentLinePos = scanner;
             continue;
         }
         else if (*scanner == '\v'){
@@ -211,7 +209,9 @@ TOKEN* tokenizer (char* scanner, long int file_size){
             char* p = scanner;
             scanner += 2;
             while(isxdigit(*scanner)) scanner++;
-            current = current->next = create_token(CONSTANTS, p, scanner, lineNumber);
+            TOKEN* last = current;
+            current = current->next = create_token(CONSTANTS, p, scanner, lineNumber, currentLinePos);
+            current->last = last;
             current->constType = INTEGERS;
             current->integerType = HEX;
             continue;
@@ -220,7 +220,9 @@ TOKEN* tokenizer (char* scanner, long int file_size){
         if (isdigit(*scanner)){
             char* p = scanner;
             while(isdigit(*scanner)) scanner ++;
-            current = current->next = create_token(CONSTANTS, p, scanner, lineNumber);
+            TOKEN* last = current;
+            current = current->next = create_token(CONSTANTS, p, scanner, lineNumber, currentLinePos);
+            current->last = last;
             current->constType = INTEGERS;
             current->integerType = DIGIT;
             current->constantVal = strtoul(p,&p,10);
@@ -241,10 +243,14 @@ TOKEN* tokenizer (char* scanner, long int file_size){
             keywordKind type = 0;
             type = is_keyword(p, scanner);
             if (type == NOTKWD){
-                current = current->next = create_token(IDNTFR, p, scanner, lineNumber);
+                TOKEN* last = current;
+                current = current->next = create_token(IDNTFR, p, scanner, lineNumber, currentLinePos);
+                current->last = last;
             }
             else{
-                current = current->next = create_token(KEYWRD, p, scanner, lineNumber);
+                TOKEN* last = current;
+                current = current->next = create_token(KEYWRD, p, scanner, lineNumber, currentLinePos);
+                current->last = last;
                 current->keywdType = type;
             }
             continue;
@@ -257,7 +263,9 @@ TOKEN* tokenizer (char* scanner, long int file_size){
         char* p = scanner;
         punctuatorKind tmpPunct = is_punctuator(scanner, &scanner);
         if (tmpPunct != NOTPUNCT){
-            current = current->next = create_token(PUNCTR, p, scanner, lineNumber);
+            TOKEN* last = current;
+            current = current->next = create_token(PUNCTR, p, scanner, lineNumber, currentLinePos);
+            current->last = last;
             current->punctType = tmpPunct;
             continue;
         }
@@ -266,6 +274,6 @@ TOKEN* tokenizer (char* scanner, long int file_size){
         // KEYWORDS
         scanner++;
     }
-    current = current->next = create_token(END, scanner, scanner, lineNumber);
+    current = current->next = create_token(END, scanner, scanner, lineNumber, currentLinePos);
     return head.next;
 };

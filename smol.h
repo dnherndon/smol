@@ -91,10 +91,12 @@ typedef struct TOKEN TOKEN;
 
 struct TOKEN{
     TOKEN* next;                // Pointer to the next item in linked list
+    TOKEN* last;                // Pointer to the last item in linked list
     lexicalElement lexElem;     // The type of token (lexical element)
     int length;                 // The length of the token
     char* location;             // Location of the token
     int tokenLineNumber;        // Token line number
+    char* tokenLinePos;         // Current line initial position
 
 // ***** KEYWORDS *****
     keywordKind keywdType;
@@ -113,7 +115,9 @@ TOKEN* tokenizer(char* scanner, long int file_size);
 void print_token(TOKEN* token);
 // Does this string match that string
 // Returns true if yes
-// static bool match(char* this, char* that);
+static bool match(char* this, char* that){
+    return strncmp(this, that, strlen(that)) == 0;
+};
 
 
 /*
@@ -125,9 +129,16 @@ typedef struct NODE NODE;
 
 typedef enum{
     NODE_NULL,
-    NODE_ADD,    // +
-    NODE_MUL,    // *
-    NODE_INT,    // Integer
+    NODE_ADD,       // +
+    NODE_SUB,       // -
+    NODE_NEGATE,    // - (unary)
+    NODE_MUL,       // *
+    NODE_DIV,       // /
+    NODE_MOD,       // %
+    NODE_INT,       // Integer
+    NODE_EQUIV,     // ==
+    NODE_NEQUIV,    // !=
+    NODE_LOGAND,    // &&
     NODE_END
 }nodeKind;
 
@@ -145,7 +156,7 @@ NODE* parse(TOKEN* token);
  *    CODE GENERATOR   *
  * *********************
  */
-int code_generator(NODE* node);
+int code_generator(NODE* node, FILE* outputFile);
 
 /*
  ************************
@@ -155,4 +166,4 @@ int code_generator(NODE* node);
 char* tokenizer_error(TOKEN* token);
 void unexpected_token_error(char* scanned);
 void expected_error(TOKEN** token);
-void errorAt(TOKEN** token);
+void errorAt(TOKEN** token, const char* format, ...);

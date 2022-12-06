@@ -17,11 +17,17 @@
 #include "smol.h"
 
 int main(int argc, char** argv){
-    // If we get too many arguments, exit the program
-    if (argc != 2){
-        printf("Incorrect number of arguments\n");
-        exit(1);
+    // Parse the possible arguments
+    char* optionO;
+    for(int i = 1; i < argc; i++){
+        if (match(argv[i], "-o")){
+            optionO = argv[++i];
+        }
     }
+    if (!optionO){
+        optionO = "out.s";
+    }
+
     // Create an input file
     FILE* input_file;
 
@@ -91,8 +97,15 @@ int main(int argc, char** argv){
     // Call Parser
     NODE* node = parse(token);
     
+    // Output file
+    FILE* output_file = fopen(optionO, "w");
+    if (output_file == NULL){
+        printf("Failed to open output file\n");
+        exit(1);
+    }
     // Call Code generator
-    code_generator(node);
+    code_generator(node, output_file);
+    fclose(output_file);
 
     return 0;
 }
