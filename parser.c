@@ -103,8 +103,35 @@ void binaryTwo(NODE** node, NODE* binaryOneNode){
     (*node) = binaryOneNode;
     return;
 }
+// Statement Nodes
+NODE* statementOne(NODE** node, nodeKind kind){
+    NODE* temp = newNode(kind);
+    temp->right = (*node);
+    return temp;
+}
+void statementTwo(NODE** node, NODE* statementOneNode){
+    statementOneNode->left = (*node);
+    (*node) = statementOneNode;
+    return;
+}
+// Declaration Nodes
+NODE* declarationOne(NODE** node, nodeKind kind){
+    NODE* temp = newNode(kind);
+    temp->right = (*node);
+    return temp;
+}
+void declarationTwo(NODE** node, NODE* declarationOneNode){
+    declarationOneNode->left = (*node);
+    (*node) = declarationOneNode;
+    return;
+}
 // Constant Node
 void constantNode(NODE** node, nodeKind kind){
+    NODE* temp = newNode(kind);
+    (*node) = temp;
+}
+// Identifier Node
+void identifierNode(NODE** node, nodeKind kind){
     NODE* temp = newNode(kind);
     (*node) = temp;
 }
@@ -784,6 +811,7 @@ int postfix_expression2(TOKEN** token, NODE** node){
     else if ((*token)->punctType == LPAR){
         consume_token(token);
         if((*token)->punctType == RPAR){
+            (*node)->kind = NODE_FUNCALL;
             consume_token(token);
             if (postfix_expression2(token, node) == 1){
                 return 1;
@@ -851,6 +879,9 @@ int postfix_expression2(TOKEN** token, NODE** node){
 //  	;
 int primary_expression(TOKEN** token, NODE** node){
     if ((*token)->lexElem == IDNTFR){
+        identifierNode(node, NODE_NULL);
+        (*node)->identifierString = (*token)->location;
+        (*node)->identifierLength = (*token)->length;
         consume_token(token);
         return 1;
     }
@@ -976,13 +1007,17 @@ int expression_statement(TOKEN** token, NODE** node){
 //  	| jump_statement
 //  	;
 int statement(TOKEN** token, NODE** node){
+    NODE* temp = statementOne(node, NODE_STATEMENT);
     if (compound_statement(token, node) == 1){
+        statementTwo(node, temp);
         return 1;
     }
     if (expression_statement(token, node) == 1){
+        statementTwo(node, temp);
         return 1;
     }
     if (jump_statement(token, node) == 1){
+        statementTwo(node, temp);
         return 1;
     }
     return 0;
@@ -992,10 +1027,12 @@ int statement(TOKEN** token, NODE** node){
 //  	| declarator
 //  	;
 int init_declarator(TOKEN** token, NODE** node){
+    NODE* temp = binaryOne(node, NODE_ASSIGN);
     if (declarator(token, node) == 1){
         if ((*token)->punctType == EQUAL){
             consume_token(token);
             if (initializer(token, node) == 1){
+                binaryTwo(node, temp);
                 return 1;
             }
             errorAt(token, "Expected initializer\n");
@@ -1037,13 +1074,17 @@ int init_declarator_list2(TOKEN** token, NODE** node){
 //  	| static_assert_declaration
 //  	;
 int declaration(TOKEN** token, NODE** node){
+    NODE* temp = declarationOne(node, NODE_DECLARATION);
     if (declaration_specifiers(token, node) == 1){
         if ((*token)->punctType == SEMICOLON){
             consume_token(token);
             return 1;
         }
+        temp->identifierString = (*token)->location;
+        temp->identifierLength = (*token)->length;
         if (init_declarator_list(token, node) == 1){
             if ((*token)->punctType == SEMICOLON){
+                declarationTwo(node, temp);
                 consume_token(token);
                 return 1;
             }
@@ -1085,7 +1126,7 @@ int block_item(TOKEN** token, NODE** node){
     if (declaration(token, node) == 1){
         return 1;
     }
-    if (statement(token, node) == 1){
+    else if (statement(token, node) == 1){
         return 1;
     }
     return 0;
@@ -1271,9 +1312,13 @@ int declaration_specifiers(TOKEN** token, NODE** node){
 //  	| declaration_specifiers declarator compound_statement
 //  	;
 int function_definition(TOKEN** token, NODE** node){
+    NODE* temp = binaryOne(node, NODE_FUNCDEC);
     if (declaration_specifiers(token, node) == 1){
+        temp->identifierString = (*token)->location;
+        temp->identifierLength = (*token)->length;
         if (declarator(token, node) == 1){
             if (compound_statement(token, node) == 1){
+                binaryTwo(node, temp);
                 return 1;
             }
         }

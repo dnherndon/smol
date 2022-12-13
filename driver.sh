@@ -9,12 +9,17 @@ test() {
     echo "passed: $executable"
   else
     echo "failed: $executable   expected $expected -> actual result $actual"
-    exit 1
   fi
 }
-test 3 add.exe
+echo "\nRunning Generated Executables:\n"
+test 55 add.exe
 test 7 complex_expression.exe
 test 5 divide.exe
 test 20 multiply.exe
 test 1 subtract.exe
 test 15 unary_minus.exe
+test 13 nullary_func.exe
+test 21 empty.exe
+test 1 equivalent.exe
+test 1 not_equivalent.exe
+test 3 modulo.exe

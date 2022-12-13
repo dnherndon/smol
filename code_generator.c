@@ -17,6 +17,12 @@
 
 #include "smol.h"
 
+// Forward declarations and prototypes
+void generateFunction(NODE* node);
+void generateExpression(NODE* node);
+void generateStatement(NODE* node);
+void generateDeclaration(NODE* node);
+
 FILE *out;
 
 void emitCode(const char* format, ...){
@@ -26,45 +32,67 @@ void emitCode(const char* format, ...){
     va_end(args);
 }
 
-void generateRecursive(NODE* node){
+void generateFunction(NODE* node){
+    if(node->left->kind == NODE_FUNCDEC){
+        generateFunction(node->left);
+    }
+    // For functions, traverse the tree pre-order
+    switch (node->kind){
+    case NODE_FUNCDEC:
+        if (match(node->identifierString, "main")){
+            emitCode("global main\n");
+        }
+        emitCode("%.*s:\n", node->identifierLength, node->identifierString);
+        emitCode("    push rbp\n");
+        emitCode("    mov rbp, rsp\n");
+        // For function body, traverse the tree post-order
+        if ((node->right->kind == NODE_STATEMENT) || (node->right->kind == NODE_DECLARATION)){
+            generateStatement(node->right);
+        }
+        emitCode("    pop rbp\n");
+        emitCode("    ret\n");
+        return;
+    }
+}
+
+void generateStatement(NODE* node){
+    if (node->right->kind == NODE_STATEMENT){
+        generateStatement(node->right);
+    }
+    else if (node->right->kind == NODE_DECLARATION){
+        generateDeclaration(node->right);
+    }
+    generateExpression(node->left);
+    return;
+}
+void generateDeclaration(NODE* node){
+
+}
+
+void generateExpression(NODE* node){
     if (node == NULL){
-        printf("No code to generate for now...\n");
-        exit(1);
+        return;
     }
     switch (node->kind){
     case NODE_INT:
         emitCode("    mov rax, %d\n", node->constantVal);
         return;
     case NODE_NEGATE:
-        generateRecursive(node->left);
+        generateExpression(node->left);
         emitCode("    neg rax\n");
         return;
-    case NODE_NULL:
+    case NODE_FUNCALL:
+        emitCode("    call %.*s\n", node->identifierLength, node->identifierString);
         return;
-    case NODE_ADD:
-        break;
-    case NODE_SUB:
-        break;
-    case NODE_MUL:
-        break;
-    case NODE_END:
-        break;
-    case NODE_EQUIV:
-        break;
-    case NODE_NEQUIV:
-        break;
-    case NODE_LOGAND:
-        break;
     }
 
-    
-    generateRecursive(node->right);
+    generateExpression(node->right);
     emitCode("    push rax\n");
-    generateRecursive(node->left);
+    generateExpression(node->left);
     emitCode("    pop rcx\n");
 
     switch (node->kind){
-        case NODE_ADD:                          // +
+    case NODE_ADD:                          // +
         emitCode("    add rax, rcx\n");
         return;
     case NODE_SUB:                          // -
@@ -82,12 +110,6 @@ void generateRecursive(NODE* node){
         emitCode("    idiv rcx\n");
         emitCode("    mov rax, rdx\n");
         return;
-    case NODE_INT:
-        break;
-    case NODE_NULL:
-        break;
-    case NODE_END:
-        break;
     case NODE_EQUIV:
         emitCode("    cmp rax, rcx\n");
         emitCode("    sete al\n");
@@ -97,18 +119,17 @@ void generateRecursive(NODE* node){
         emitCode("    cmp rax, rcx\n");
         emitCode("    setne al\n");
         emitCode("    movzx rax, al\n");
-        break;
-    case NODE_LOGAND:
         return;
     }
-
+    printf("Invalid node\n");
+    exit(1);
 }
 
 int code_generator(NODE* node, FILE* outputFile){
     out = outputFile;
-    emitCode("global main\n");
-    emitCode("main:\n");
-    generateRecursive(node);
-    emitCode("    ret\n");
+    //printf("node: %ld\n", node->kind);
+    //printf("node: %ld\n", node->right->kind);
+    //printf("node: %ld\n", node->right->left->kind);
+    generateFunction(node);
     return 1;
 }

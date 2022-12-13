@@ -139,6 +139,12 @@ typedef enum{
     NODE_EQUIV,     // ==
     NODE_NEQUIV,    // !=
     NODE_LOGAND,    // &&
+    NODE_FUNCALL,   // Function Call
+    NODE_FUNCDEC,   // Function Declaration
+    NODE_STATEMENT,
+    NODE_VAR,
+    NODE_ASSIGN,
+    NODE_DECLARATION,
     NODE_END
 }nodeKind;
 
@@ -147,6 +153,8 @@ struct NODE{
     NODE* left;
     NODE* right;
     int constantVal;
+    char* identifierString;
+    int identifierLength;
 };
 
 NODE* parse(TOKEN* token);

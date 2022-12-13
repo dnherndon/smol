@@ -9,14 +9,14 @@ smol: $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 	rm -f *.tmp
 
-test: $(TESTS)
+test: $(TESTS) ./driver.sh
 	./driver.sh
 
-test/%.exe: smol
+test/%.exe: smol $(TEST_SRCS)
 	./smol test/$*.c -o test/$*.s
 	nasm -f elf64 test/$*.s -o test/$*.o
 	$(CC) test/$*.o -o test/$*.exe
-	rm test/*.s test/*.o
+	rm test/*.o
 
 clean:
 	rm -f smol *.out *.o *.asm *.tmp *.s
