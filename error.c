@@ -33,7 +33,7 @@ void errorAt(TOKEN** token, const char* format, ...){
     printf("%*s", col, "");
     printf("^\n");
     va_start(args, format);
-    printf(format, args);
+    vprintf(format, args);
     va_end(args);
     exit(1);
 }

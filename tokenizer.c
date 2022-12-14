@@ -21,6 +21,10 @@ TOKEN* create_token(lexicalElement type, char* beginning, char* end, int lineNum
     // memory. It allocates 1 block the size of the TOKEN data structure.
     // token is then a pointer to this new spot in memory.
     TOKEN* token = calloc(1, sizeof(TOKEN));
+    if (token == NULL){
+        printf("Failed to allocate token memory\n");
+        exit(1);
+    }
     // The lexicalElement has been given to us by the function callee
     token->lexElem = type;
     // The location of the token is given by where the token starts
@@ -31,6 +35,13 @@ TOKEN* create_token(lexicalElement type, char* beginning, char* end, int lineNum
     token->tokenLineNumber = lineNumber;
     // Token beginning position of the current line
     token->tokenLinePos = linePos;
+    // We create a memory location with the token's contents
+    token->tokenContent = calloc(1, token->length);
+    if(token->tokenContent == NULL){
+        printf("Failed to allocate token memory\n");
+        exit(1);
+    }
+    memcpy(token->tokenContent, token->location, token->length);
     // We then return the ppinter to this spot in memory
     return token;
 };

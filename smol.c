@@ -95,7 +95,8 @@ int main(int argc, char** argv){
     TOKEN* token = tokenizer(inputStream, file_size);
 
     // Call Parser
-    NODE* node = parse(token);
+    symbolTable* table = createSymbolTable(8);
+    NODE* node = parse(token, table);
     
     // Output file
     FILE* output_file = fopen(optionO, "w");
@@ -104,7 +105,7 @@ int main(int argc, char** argv){
         exit(1);
     }
     // Call Code generator
-    code_generator(node, output_file);
+    code_generator(node, output_file, table);
     fclose(output_file);
 
     return 0;

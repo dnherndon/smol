@@ -97,6 +97,7 @@ struct TOKEN{
     char* location;             // Location of the token
     int tokenLineNumber;        // Token line number
     char* tokenLinePos;         // Current line initial position
+    char* tokenContent;         // Contains the string of the token
 
 // ***** KEYWORDS *****
     keywordKind keywdType;
@@ -119,6 +120,38 @@ static bool match(char* this, char* that){
     return strncmp(this, that, strlen(that)) == 0;
 };
 
+/*
+ **********************
+ *    SYMBOL TABLE    *
+ * ********************
+ */
+typedef struct symTblEntry symTblEntry;
+struct symTblEntry{
+    char* key;
+    void* value;
+};
+typedef struct symbolTable symbolTable;
+struct symbolTable{
+    symTblEntry* entry;
+    int size;
+    int count;
+};
+// This hashing function computes the 64 bit FNV-1a hash of a string
+unsigned long int hashingFunction(char* str, int length);
+
+// This function creates a symbol table of a specified size and
+// returns a pointer to the the table
+symbolTable* createSymbolTable(int size);
+
+// This inserts a value into the given table using the key
+int symTblInsert(symbolTable* table, char* key, void* value);
+
+// This retrieves the pointer to an entry in the given table
+// using the key
+symTblEntry* symTblGet(symbolTable* table, char* key);
+
+// This deletes the entry in the table with the key
+void symTblDelete(symbolTable* table, char* key);
 
 /*
  ****************
@@ -148,23 +181,35 @@ typedef enum{
     NODE_END
 }nodeKind;
 
+typedef struct SYMBOL SYMBOL;
+
+typedef enum{
+    SYM_NULL,
+    SYM_FUNC,
+    SYM_VAR
+}symbolKind;
+
+struct SYMBOL{
+    symbolKind kind;
+    char* name;
+};
+
 struct NODE{
     nodeKind kind;
     NODE* left;
     NODE* right;
     int constantVal;
-    char* identifierString;
-    int identifierLength;
+    SYMBOL* symbol;
 };
 
-NODE* parse(TOKEN* token);
+NODE* parse(TOKEN* token, symbolTable* table);
 
 /*
  ***********************
  *    CODE GENERATOR   *
  * *********************
  */
-int code_generator(NODE* node, FILE* outputFile);
+int code_generator(NODE* node, FILE* outputFile, symbolTable* table);
 
 /*
  ************************
@@ -175,3 +220,5 @@ char* tokenizer_error(TOKEN* token);
 void unexpected_token_error(char* scanned);
 void expected_error(TOKEN** token);
 void errorAt(TOKEN** token, const char* format, ...);
+
+

@@ -24,6 +24,7 @@ void generateStatement(NODE* node);
 void generateDeclaration(NODE* node);
 
 FILE *out;
+symbolTable* codegenTable;
 
 void emitCode(const char* format, ...){
     va_list args;
@@ -39,10 +40,10 @@ void generateFunction(NODE* node){
     // For functions, traverse the tree pre-order
     switch (node->kind){
     case NODE_FUNCDEC:
-        if (match(node->identifierString, "main")){
+        if (match(node->symbol->name, "main")){
             emitCode("global main\n");
         }
-        emitCode("%.*s:\n", node->identifierLength, node->identifierString);
+        emitCode("%s:\n", node->symbol->name);
         emitCode("    push rbp\n");
         emitCode("    mov rbp, rsp\n");
         // For function body, traverse the tree post-order
@@ -66,7 +67,7 @@ void generateStatement(NODE* node){
     return;
 }
 void generateDeclaration(NODE* node){
-
+    printf("here\n");
 }
 
 void generateExpression(NODE* node){
@@ -82,7 +83,7 @@ void generateExpression(NODE* node){
         emitCode("    neg rax\n");
         return;
     case NODE_FUNCALL:
-        emitCode("    call %.*s\n", node->identifierLength, node->identifierString);
+        emitCode("    call %s\n", node->symbol->name);
         return;
     }
 
@@ -125,8 +126,9 @@ void generateExpression(NODE* node){
     exit(1);
 }
 
-int code_generator(NODE* node, FILE* outputFile){
+int code_generator(NODE* node, FILE* outputFile, symbolTable* table){
     out = outputFile;
+    codegenTable = table;
     //printf("node: %ld\n", node->kind);
     //printf("node: %ld\n", node->right->kind);
     //printf("node: %ld\n", node->right->left->kind);

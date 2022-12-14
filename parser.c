@@ -18,6 +18,9 @@
 // A big thank you to the author of this website https://www.quut.com/c/ANSI-C-grammar-y.html
 #include "smol.h"
 
+// Symbol table
+symbolTable* parserTable;
+
 // Function prototypes
 int block_item(TOKEN** token, NODE** node);
 int block_item_list(TOKEN** token, NODE** node);
@@ -80,75 +83,105 @@ int compound_statement(TOKEN** token, NODE** node);
 // Node creation functions
 NODE* newNode(nodeKind kind){
     NODE* temp = calloc(1, sizeof(NODE));
+    if (temp == NULL){
+        printf("Node memory not allocated\n");
+        exit(1);
+    }
     temp->kind = kind;
     return temp;
 }
+// Symbol creation function
+SYMBOL* newSymbol(symbolKind kind, char* name)
+{
+    SYMBOL* temp = calloc(1, sizeof(SYMBOL));
+     if (temp == NULL){
+        printf("Symbol memory not allocated\n");
+        exit(1);
+    }
+    temp->kind = kind;
+    temp->name = name;
+    return temp;
+}
 // Unary nodes
-NODE* unaryOne(NODE** node, nodeKind kind){
+NODE* unaryOne(NODE** node, nodeKind kind)
+{
     NODE* temp = newNode(kind);
     return temp;
 }
-void unaryTwo(NODE** node, NODE* unaryOneNode){
+void unaryTwo(NODE** node, NODE* unaryOneNode)
+{
     unaryOneNode->left = (*node);
     (*node) = unaryOneNode;
 }
 // Binary Nodes
-NODE* binaryOne(NODE** node, nodeKind kind){
+NODE* binaryOne(NODE** node, nodeKind kind)
+{
     NODE* temp = newNode(kind);
     temp->left = (*node);
     return temp;
 }
-void binaryTwo(NODE** node, NODE* binaryOneNode){
+void binaryTwo(NODE** node, NODE* binaryOneNode)
+{
     binaryOneNode->right = (*node);
     (*node) = binaryOneNode;
     return;
 }
 // Statement Nodes
-NODE* statementOne(NODE** node, nodeKind kind){
+NODE* statementOne(NODE** node, nodeKind kind)
+{
     NODE* temp = newNode(kind);
     temp->right = (*node);
     return temp;
 }
-void statementTwo(NODE** node, NODE* statementOneNode){
+void statementTwo(NODE** node, NODE* statementOneNode)
+{
     statementOneNode->left = (*node);
     (*node) = statementOneNode;
     return;
 }
 // Declaration Nodes
-NODE* declarationOne(NODE** node, nodeKind kind){
+NODE* declarationOne(NODE** node, nodeKind kind)
+{
     NODE* temp = newNode(kind);
     temp->right = (*node);
     return temp;
 }
-void declarationTwo(NODE** node, NODE* declarationOneNode){
+void declarationTwo(NODE** node, NODE* declarationOneNode)
+{
     declarationOneNode->left = (*node);
     (*node) = declarationOneNode;
     return;
 }
 // Constant Node
-void constantNode(NODE** node, nodeKind kind){
+void constantNode(NODE** node, nodeKind kind)
+{
     NODE* temp = newNode(kind);
     (*node) = temp;
 }
 // Identifier Node
-void identifierNode(NODE** node, nodeKind kind){
+void identifierNode(NODE** node, nodeKind kind)
+{
     NODE* temp = newNode(kind);
     (*node) = temp;
 }
 
 // Place holders
-int type_name(TOKEN** token, NODE** node){
+int type_name(TOKEN** token, NODE** node)
+{
     return 0;
 }
-int initializer_list(TOKEN** token, NODE** node){
+int initializer_list(TOKEN** token, NODE** node)
+{
     return 0;
 }
-int argument_expression_list(TOKEN** token, NODE** node){
+int argument_expression_list(TOKEN** token, NODE** node)
+{
     return 0;
 }
 
 // Consumes the token passed
-void consume_token(TOKEN** token){
+void consume_token(TOKEN** token)
+{
     *token = (*token)->next;
 }
 // <assignment-operator> ::= =
@@ -162,17 +195,18 @@ void consume_token(TOKEN** token){
 //                         | &=
 //                         | ^=
 //                         | |=
-int assignment_operator(TOKEN** token, NODE** node){
+int assignment_operator(TOKEN** token, NODE** node)
+{
     return 1;
 }
 // <initializer> ::= <assignment-expression>
 //                 | { <initializer-list> }
 //                 | { <initializer-list> , }
-int initializer(TOKEN** token, NODE** node){
+int initializer(TOKEN** token, NODE** node)
+{
     if (assignment_expression(token, node) == 1){
         return 1;
-    }
-    else{
+    } else{
         printf("Initializer lists not yet supported\n");
         exit(1);
     }
@@ -180,7 +214,8 @@ int initializer(TOKEN** token, NODE** node){
 //  conditional_expression
 //  	: logical_or_expression conditional_expression2
 //  	;
-int conditional_expression(TOKEN** token, NODE** node){
+int conditional_expression(TOKEN** token, NODE** node)
+{
     if (logical_or_expression(token, node) == 1){
         if (conditional_expression2(token, node) == 1){
             return 1;
@@ -192,7 +227,8 @@ int conditional_expression(TOKEN** token, NODE** node){
 //  	| '?' expression ':' conditional_expression conditional_expression2
 //      | epsilon
 //  	;
-int conditional_expression2(TOKEN** token, NODE** node){
+int conditional_expression2(TOKEN** token, NODE** node)
+{
     if ((*token)->punctType == QUESTION){
         consume_token(token);
         if (expression(token, node) == 1){
@@ -215,7 +251,8 @@ int conditional_expression2(TOKEN** token, NODE** node){
 //  logical_or_expression
 //  	: logical_and_expression logical_or_expression2
 //  	;
-int logical_or_expression(TOKEN** token, NODE** node){
+int logical_or_expression(TOKEN** token, NODE** node)
+{
     if (logical_and_expression(token, node) == 1){
         if (logical_or_expression2(token, node) == 1){
             return 1;
@@ -227,7 +264,8 @@ int logical_or_expression(TOKEN** token, NODE** node){
 //  	| '||' logical_and_expression logical_or_expression2
 //      | epsilon
 //  	;
-int logical_or_expression2(TOKEN** token, NODE** node){
+int logical_or_expression2(TOKEN** token, NODE** node)
+{
     if ((*token)->punctType == LOGOR){
         consume_token(token);
         if (logical_and_expression(token, node) == 1){
@@ -243,7 +281,8 @@ int logical_or_expression2(TOKEN** token, NODE** node){
 //  logical_and_expression
 //  	: inclusive_or_expression logical_and_expression2
 //  	;
-int logical_and_expression(TOKEN** token, NODE** node){
+int logical_and_expression(TOKEN** token, NODE** node)
+{
     if (inclusive_or_expression(token, node) == 1){
         if (logical_and_expression2(token, node) == 1){
             return 1;
@@ -255,7 +294,8 @@ int logical_and_expression(TOKEN** token, NODE** node){
 //  	| '&&' inclusive_or_expression logical_and_expression2
 //      | epsilon
 //  	;
-int logical_and_expression2(TOKEN** token, NODE** node){
+int logical_and_expression2(TOKEN** token, NODE** node)
+{
     if ((*token)->punctType == LOGAND){
         NODE* temp = binaryOne(node, NODE_LOGAND);
         consume_token(token);
@@ -273,7 +313,8 @@ int logical_and_expression2(TOKEN** token, NODE** node){
 //  inclusive_or_expression
 //  	: exclusive_or_expression inclusive_or_expression2
 //  	;
-int inclusive_or_expression(TOKEN** token, NODE** node){
+int inclusive_or_expression(TOKEN** token, NODE** node)
+{
     if (exclusive_or_expression(token, node) == 1){
         if (inclusive_or_expression2(token, node) == 1){
             return 1;
@@ -285,7 +326,8 @@ int inclusive_or_expression(TOKEN** token, NODE** node){
 //  	| '|' exclusive_or_expression inclusive_or_expression2
 //      | epsilon
 //  	;
-int inclusive_or_expression2(TOKEN** token, NODE** node){
+int inclusive_or_expression2(TOKEN** token, NODE** node)
+{
     if ((*token)->punctType == BITOR){
         consume_token(token);
         if (exclusive_or_expression(token, node) == 1){
@@ -301,7 +343,8 @@ int inclusive_or_expression2(TOKEN** token, NODE** node){
 //  exclusive_or_expression
 //  	: and_expression exclusive_or_expression2
 //  	;
-int exclusive_or_expression(TOKEN** token, NODE** node){
+int exclusive_or_expression(TOKEN** token, NODE** node)
+{
     if (and_expression(token, node) == 1){
         if (exclusive_or_expression2(token, node) == 1){
             return 1;
@@ -313,7 +356,8 @@ int exclusive_or_expression(TOKEN** token, NODE** node){
 //  	: '^' and_expression exclusive_or_expression2
 //      | epsilon
 //  	;
-int exclusive_or_expression2(TOKEN** token, NODE** node){
+int exclusive_or_expression2(TOKEN** token, NODE** node)
+{
     if ((*token)->punctType == BITXOR){
         consume_token(token);
         if (and_expression(token, node) == 1){
@@ -329,7 +373,8 @@ int exclusive_or_expression2(TOKEN** token, NODE** node){
 //  and_expression
 //  	: equality_expression and_expression2
 //  	;
-int and_expression(TOKEN** token, NODE** node){
+int and_expression(TOKEN** token, NODE** node)
+{
     if (equality_expression(token, node) == 1){
         if (and_expression2(token, node) == 1){
             return 1;
@@ -341,7 +386,8 @@ int and_expression(TOKEN** token, NODE** node){
 //  	| '&' equality_expression and_expression2
 //      | epsilon
 //  	;
-int and_expression2(TOKEN** token, NODE** node){
+int and_expression2(TOKEN** token, NODE** node)
+{
     if ((*token)->punctType == BITAND){
         consume_token(token);
         if (equality_expression(token, node) == 1){
@@ -357,7 +403,8 @@ int and_expression2(TOKEN** token, NODE** node){
 //  equality_expression
 //  	: relational_expression equality_expression2
 //  	;
-int equality_expression(TOKEN** token, NODE** node){
+int equality_expression(TOKEN** token, NODE** node)
+{
     if (relational_expression(token, node) == 1){
         if (equality_expression2(token, node) == 1){
             return 1;
@@ -370,7 +417,8 @@ int equality_expression(TOKEN** token, NODE** node){
 //  	| '!=' relational_expression equality_expression2
 //      | epsilon
 //  	;
-int equality_expression2(TOKEN** token, NODE** node){
+int equality_expression2(TOKEN** token, NODE** node)
+{
     if ((*token)->punctType == EQUIV){
         NODE* temp = binaryOne(node, NODE_EQUIV);
         consume_token(token);
@@ -382,8 +430,7 @@ int equality_expression2(TOKEN** token, NODE** node){
         }
         errorAt(token, "Expected expression\n");
         return 0;
-    }
-    else if ((*token)->punctType == NOTEQUIV){
+    } else if ((*token)->punctType == NOTEQUIV){
         consume_token(token);
         NODE* temp = binaryOne(node, NODE_NEQUIV);
         if (relational_expression(token, node) == 1){
@@ -400,7 +447,8 @@ int equality_expression2(TOKEN** token, NODE** node){
 //  relational_expression
 //  	: shift_expression relational_expression2
 //  	;
-int relational_expression(TOKEN** token, NODE** node){
+int relational_expression(TOKEN** token, NODE** node)
+{
     if (shift_expression(token, node) == 1){
         if (relational_expression2(token, node) == 1){
             return 1;
@@ -415,7 +463,8 @@ int relational_expression(TOKEN** token, NODE** node){
 //  	| '>=' shift_expression relational_expression2
 //      | epsilon
 //  	;
-int relational_expression2(TOKEN** token, NODE** node){
+int relational_expression2(TOKEN** token, NODE** node)
+{
     if ((*token)->punctType == LT){
         consume_token(token);
         if (shift_expression(token, node) == 1){
@@ -425,8 +474,7 @@ int relational_expression2(TOKEN** token, NODE** node){
         }
         errorAt(token, "Expected expression\n");
         return 0;
-    }
-    else if ((*token)->punctType == GT){
+    } else if ((*token)->punctType == GT){
         consume_token(token);
         if (shift_expression(token, node) == 1){
             if (relational_expression2(token, node) == 1){
@@ -435,8 +483,7 @@ int relational_expression2(TOKEN** token, NODE** node){
         }
         errorAt(token, "Expected expression\n");
         return 0;
-    }
-    else if ((*token)->punctType == LE){
+    } else if ((*token)->punctType == LE){
         consume_token(token);
         if (shift_expression(token, node) == 1){
             if (relational_expression2(token, node) == 1){
@@ -445,8 +492,7 @@ int relational_expression2(TOKEN** token, NODE** node){
         }
         errorAt(token, "Expected expression\n");
         return 0;
-    }
-    else if ((*token)->punctType == GE){
+    } else if ((*token)->punctType == GE){
         consume_token(token);
         if (shift_expression(token, node) == 1){
             if (relational_expression2(token, node) == 1){
@@ -461,7 +507,8 @@ int relational_expression2(TOKEN** token, NODE** node){
 //  shift_expression
 //  	: additive_expression shift_expression2
 //  	;
-int shift_expression(TOKEN** token, NODE** node){
+int shift_expression(TOKEN** token, NODE** node)
+{
     if (additive_expression(token, node) == 1){
         if (shift_expression2(token, node) == 1){
             return 1;
@@ -474,7 +521,8 @@ int shift_expression(TOKEN** token, NODE** node){
 //  	| '>>' additive_expression shift_expression2
 //      | epsilon
 //  	;
-int shift_expression2(TOKEN** token, NODE** node){
+int shift_expression2(TOKEN** token, NODE** node)
+{
     if ((*token)->punctType == LSHFT){
         consume_token(token);
         if (additive_expression(token, node) == 1){
@@ -500,7 +548,8 @@ int shift_expression2(TOKEN** token, NODE** node){
 //  additive_expression
 //  	: multiplicative_expression additive_expression2
 //  	;
-int additive_expression(TOKEN** token, NODE** node){
+int additive_expression(TOKEN** token, NODE** node)
+{
     if (multiplicative_expression(token, node) == 1){
         if (additive_expression2(token, node) == 1){
             return 1;
@@ -513,7 +562,8 @@ int additive_expression(TOKEN** token, NODE** node){
 //  	| '-' multiplicative_expression additive_expression2
 //      | epsilons
 //  	;
-int additive_expression2(TOKEN** token, NODE** node){
+int additive_expression2(TOKEN** token, NODE** node)
+{
     if ((*token)->punctType == PLUS){
         NODE* temp = binaryOne(node, NODE_ADD);
         consume_token(token);
@@ -525,8 +575,7 @@ int additive_expression2(TOKEN** token, NODE** node){
         }
         errorAt(token, "Expected expression\n");
         return 0;
-    }
-    else if ((*token)->punctType == MINUS){
+    } else if ((*token)->punctType == MINUS){
         NODE* temp = binaryOne(node, NODE_SUB);
         consume_token(token);
         if (multiplicative_expression(token, node) == 1){
@@ -543,7 +592,8 @@ int additive_expression2(TOKEN** token, NODE** node){
 //  multiplicative_expression
 //  	: cast_expression multiplicative_expression2
 //  	;
-int multiplicative_expression(TOKEN** token, NODE** node){
+int multiplicative_expression(TOKEN** token, NODE** node)
+{
     if (cast_expression(token, node) == 1){
         if (multiplicative_expression2(token, node) == 1){
             return 1;
@@ -557,7 +607,8 @@ int multiplicative_expression(TOKEN** token, NODE** node){
 //  	| '%' cast_expression multiplicative_expression2
 //      | epsilon
 //  	;
-int multiplicative_expression2(TOKEN** token, NODE** node){
+int multiplicative_expression2(TOKEN** token, NODE** node)
+{
     if ((*token)->punctType == STAR){
         NODE* temp = binaryOne(node, NODE_MUL);
         consume_token(token);
@@ -600,11 +651,11 @@ int multiplicative_expression2(TOKEN** token, NODE** node){
 //  	: unary_expression
 //  	| '(' type_name ')' cast_expression
 //  	;
-int cast_expression(TOKEN** token, NODE** node){
+int cast_expression(TOKEN** token, NODE** node)
+{
     if (unary_expression(token, node) == 1){
         return 1;
-    }
-    else if ((*token)->punctType == LPAR){
+    } else if ((*token)->punctType == LPAR){
         consume_token(token);
         if (type_name(token, node) == 1){
             if ((*token)->punctType == RPAR){
@@ -633,48 +684,43 @@ int cast_expression(TOKEN** token, NODE** node){
 //  	| 'sizeof' '(' type_name ')'
 //  	| 'alignof' '(' type_name ')'
 //  	;
-int unary_expression(TOKEN** token, NODE** node){
+int unary_expression(TOKEN** token, NODE** node)
+{
     if (postfix_expression(token, node) == 1){
         return 1;
-    }
-    else if ((*token)->punctType == INCREMENT){
+    } else if ((*token)->punctType == INCREMENT){
         consume_token(token);
         if (unary_expression(token, node) == 1){
             return 1;
         }
         errorAt(token, "Expected expression\n");
         return 0;
-    }
-    else if ((*token)->punctType == DECREMENT){
+    } else if ((*token)->punctType == DECREMENT){
         consume_token(token);
         if (unary_expression(token, node) == 1){
             return 1;
         }
         errorAt(token, "Expected expression\n");
         return 0;
-    }
-    else if ((*token)->punctType == BITAND){
+    } else if ((*token)->punctType == BITAND){
         consume_token(token);
         if (cast_expression(token, node) == 1){
             return 1;
         }
         errorAt(token, "Expected expression\n");
-    }
-    else if ((*token)->punctType == STAR){
+    } else if ((*token)->punctType == STAR){
         consume_token(token);
         if (cast_expression(token, node) == 1){
             return 1;
         }
         errorAt(token, "Expected expression\n");
-    }
-    else if ((*token)->punctType == PLUS){
+    } else if ((*token)->punctType == PLUS){
         consume_token(token);
         if (cast_expression(token, node) == 1){
             return 1;
         }
         errorAt(token, "Expected expression\n");
-    }
-    else if ((*token)->punctType == MINUS){
+    } else if ((*token)->punctType == MINUS){
         NODE* temp = unaryOne(node, NODE_NEGATE);
         consume_token(token);
         if (cast_expression(token, node) == 1){
@@ -682,28 +728,24 @@ int unary_expression(TOKEN** token, NODE** node){
             return 1;
         }
         errorAt(token, "Expected expression\n");
-    }
-    else if ((*token)->punctType == BITNOT){
+    } else if ((*token)->punctType == BITNOT){
         consume_token(token);
         if (cast_expression(token, node) == 1){
             return 1;
         }
         errorAt(token, "Expected expression\n");
-    }
-    else if ((*token)->punctType == EXCLAMATION){
+    } else if ((*token)->punctType == EXCLAMATION){
         consume_token(token);
         if (cast_expression(token, node) == 1){
             return 1;
         }
         errorAt(token, "Expected expression\n");
-    }
-    else if ((*token)->keywdType == SIZEOF){
+    } else if ((*token)->keywdType == SIZEOF){
         consume_token(token);
         if (unary_expression(token, node) == 1){
             return 1;
         }
-    }
-    else if ((*token)->keywdType == SIZEOF){
+    } else if ((*token)->keywdType == SIZEOF){
         consume_token(token);
         if ((*token)->punctType == LPAR){
             consume_token(token);
@@ -716,8 +758,7 @@ int unary_expression(TOKEN** token, NODE** node){
                 return 0;
             }
         }
-    }
-    else if ((*token)->keywdType == _ALIGNOF){
+    } else if ((*token)->keywdType == _ALIGNOF){
         consume_token(token);
         if ((*token)->punctType == LPAR){
             consume_token(token);
@@ -738,13 +779,13 @@ int unary_expression(TOKEN** token, NODE** node){
 //  	| '(' type_name ')' '{' initializer_list '}' postfix_expression2
 //  	| '(' type_name ')' '{' initializer_list ',' '}' postfix_expression2
 //  	;
-int postfix_expression(TOKEN** token, NODE** node){
+int postfix_expression(TOKEN** token, NODE** node)
+{
     if (primary_expression(token, node) == 1){
         if (postfix_expression2(token, node) == 1){
             return 1;
         }
-    }
-    else if ((*token)->punctType == LPAR){
+    } else if ((*token)->punctType == LPAR){
         consume_token(token);
         if (type_name(token, node) == 1){
             if ((*token)->punctType == RPAR){
@@ -757,26 +798,22 @@ int postfix_expression(TOKEN** token, NODE** node){
                             if (postfix_expression2(token, node) == 1){
                                 return 1;
                             }
-                        }
-                        else if ((*token)->punctType == COMMA){
+                        } else if ((*token)->punctType == COMMA){
                             consume_token(token);
                             if ((*token)->punctType == RBRACE){
                                 consume_token(token);
                                 if (postfix_expression2(token, node) == 1){
                                     return 1;
                                 }
-                            }
-                            else{
+                            } else{
                                 errorAt(token, "Mismatched braces. Expected \'}\'\n");
                             }
-                        }
-                        else{
+                        } else{
                             errorAt(token, "Expected brace or comma\n");
                         }
                     }
                 }
-            }
-            else{
+            } else{
                 errorAt(token, "Mismatched parentheses. Expected \')\'\n");
             }
         }
@@ -793,7 +830,8 @@ int postfix_expression(TOKEN** token, NODE** node){
 //  	| '--' postfix_expression2
 //      | epsilon
 //  	;
-int postfix_expression2(TOKEN** token, NODE** node){
+int postfix_expression2(TOKEN** token, NODE** node)
+{
     if ((*token)->punctType == LBRACK){
         consume_token(token);
         if (expression(token, node) == 1){
@@ -802,22 +840,20 @@ int postfix_expression2(TOKEN** token, NODE** node){
                 if (postfix_expression2(token, node) == 1){
                     return 1;
                 }
-            }
-            else{
+            } else{
                 errorAt(token, "Mismatched brackets. Expected \']\'\n");
             }
         }
-    }
-    else if ((*token)->punctType == LPAR){
+    } else if ((*token)->punctType == LPAR){
         consume_token(token);
         if((*token)->punctType == RPAR){
             (*node)->kind = NODE_FUNCALL;
+            (*node)->symbol->kind = SYM_FUNC;
             consume_token(token);
             if (postfix_expression2(token, node) == 1){
                 return 1;
             }
-        }
-        else if (argument_expression_list(token, node) == 1){
+        } else if (argument_expression_list(token, node) == 1){
             if ((*token)->punctType == RPAR){
                 consume_token(token);
                 if (postfix_expression2(token, node) == 1){
@@ -825,12 +861,10 @@ int postfix_expression2(TOKEN** token, NODE** node){
                 }
             }
             errorAt(token, "Mismatched parentheses. Expected \')\'\n");
-        }
-        else{
+        } else{
             errorAt(token, "Mismatched parentheses. Expected \')\'\n");
         }
-    }
-    else if ((*token)->punctType == DOT){
+    } else if ((*token)->punctType == DOT){
         consume_token(token);
         if ((*token)->lexElem == IDNTFR){
             consume_token(token);
@@ -840,8 +874,7 @@ int postfix_expression2(TOKEN** token, NODE** node){
         }
         errorAt(token, "Expected expression\n");
         return 0;
-    }
-    else if ((*token)->punctType == DEREFERENCE){
+    } else if ((*token)->punctType == DEREFERENCE){
         consume_token(token);
         if ((*token)->lexElem == IDNTFR){
             consume_token(token);
@@ -851,16 +884,14 @@ int postfix_expression2(TOKEN** token, NODE** node){
         }
         errorAt(token, "Expected expression\n");
         return 0;
-    }
-    else if ((*token)->punctType == INCREMENT){
+    } else if ((*token)->punctType == INCREMENT){
         consume_token(token);
         if (postfix_expression2(token, node) == 1){
             return 1;
         }
         errorAt(token, "Expected expression\n");
         return 0;
-    }
-    else if ((*token)->punctType == DECREMENT){
+    } else if ((*token)->punctType == DECREMENT){
         consume_token(token);
         if (postfix_expression2(token, node) == 1){
             return 1;
@@ -877,25 +908,22 @@ int postfix_expression2(TOKEN** token, NODE** node){
 //  	| '(' expression ')'
 //  	| generic_selection //TODO:
 //  	;
-int primary_expression(TOKEN** token, NODE** node){
+int primary_expression(TOKEN** token, NODE** node)
+{
     if ((*token)->lexElem == IDNTFR){
         identifierNode(node, NODE_NULL);
-        (*node)->identifierString = (*token)->location;
-        (*node)->identifierLength = (*token)->length;
+        (*node)->symbol = newSymbol(SYM_NULL, (*token)->tokenContent);
         consume_token(token);
         return 1;
-    }
-    else if (constant(token, node) == 1){
+    } else if (constant(token, node) == 1){
         return 1;
-    }
-    else if ((*token)->punctType == LPAR){
+    } else if ((*token)->punctType == LPAR){
         consume_token(token);
         if (expression(token, node) == 1){
             if((*token)->punctType == RPAR){
                 consume_token(token);
                 return 1;
-            }
-            else{
+            } else{
                 errorAt(token, "Mismatched parentheses. Expected \')\'\n");
             }
         }
@@ -907,7 +935,8 @@ int primary_expression(TOKEN** token, NODE** node){
 //  	| F_CONSTANT //TODO:
 //  	| ENUMERATION_CONSTANT	//TODO: /* after it has been defined as such */
 //  	;
-int constant(TOKEN** token, NODE** node){
+int constant(TOKEN** token, NODE** node)
+{
     if ((*token)->lexElem == CONSTANTS){
         constantNode(node, NODE_INT);
         (*node)->constantVal = (*token)->constantVal;
@@ -920,7 +949,8 @@ int constant(TOKEN** token, NODE** node){
 //  	: conditional_expression
 //  	| unary_expression assignment_operator assignment_expression
 //  	;
-int assignment_expression(TOKEN** token, NODE** node){
+int assignment_expression(TOKEN** token, NODE** node)
+{
     if(conditional_expression(token, node) == 1){
         return 1;
     }
@@ -940,7 +970,8 @@ int assignment_expression(TOKEN** token, NODE** node){
 //  	| RETURN ';'
 //  	| RETURN expression ';'
 //  	;
-int jump_statement(TOKEN** token, NODE** node){
+int jump_statement(TOKEN** token, NODE** node)
+{
     if ((*token)->keywdType == RETURN){
         consume_token(token);
         if (expression(token, node) == 1){
@@ -956,7 +987,8 @@ int jump_statement(TOKEN** token, NODE** node){
 //  expression
 //  	: assignment_expression expression2
 //  	;
-int expression(TOKEN** token, NODE** node){
+int expression(TOKEN** token, NODE** node)
+{
     if (assignment_expression(token, node) == 1){
         if (expression2(token, node) == 1){
             return 1;
@@ -969,7 +1001,8 @@ int expression(TOKEN** token, NODE** node){
 //  	| ',' assignment_expression expression2
 //      | epsilon
 //  	;
-int expression2(TOKEN** token, NODE** node){
+int expression2(TOKEN** token, NODE** node)
+{
     if ((*token)->punctType == COMMA){
         if (assignment_expression(token, node) == 1){
             if (expression2(token, node) == 1){
@@ -984,7 +1017,8 @@ int expression2(TOKEN** token, NODE** node){
 //  	: ';'
 //  	| expression ';'
 //  	;
-int expression_statement(TOKEN** token, NODE** node){
+int expression_statement(TOKEN** token, NODE** node)
+{
     if ((*token)->punctType == SEMICOLON){
         consume_token(token);
         return 1;
@@ -1006,7 +1040,8 @@ int expression_statement(TOKEN** token, NODE** node){
 //  	| iteration_statement
 //  	| jump_statement
 //  	;
-int statement(TOKEN** token, NODE** node){
+int statement(TOKEN** token, NODE** node)
+{
     NODE* temp = statementOne(node, NODE_STATEMENT);
     if (compound_statement(token, node) == 1){
         statementTwo(node, temp);
@@ -1026,7 +1061,8 @@ int statement(TOKEN** token, NODE** node){
 //  	: declarator '=' initializer
 //  	| declarator
 //  	;
-int init_declarator(TOKEN** token, NODE** node){
+int init_declarator(TOKEN** token, NODE** node)
+{
     NODE* temp = binaryOne(node, NODE_ASSIGN);
     if (declarator(token, node) == 1){
         if ((*token)->punctType == EQUAL){
@@ -1043,7 +1079,8 @@ int init_declarator(TOKEN** token, NODE** node){
 }
 //  init_declarator_list
 //  	: init_declarator init_declarator_list2
-int init_declarator_list(TOKEN** token, NODE** node){
+int init_declarator_list(TOKEN** token, NODE** node)
+{
     if(init_declarator(token, node) == 1){
         if(init_declarator_list2(token, node) == 1){
             return 1;
@@ -1055,7 +1092,8 @@ int init_declarator_list(TOKEN** token, NODE** node){
 //  init_declarator_list2
 //  	: ',' init_declarator init_declarator_list2
 //      | epsilon
-int init_declarator_list2(TOKEN** token, NODE** node){
+int init_declarator_list2(TOKEN** token, NODE** node)
+{
     if ((*token)->punctType == COMMA){
         consume_token(token);
         if (init_declarator(token, node) == 1){
@@ -1073,22 +1111,21 @@ int init_declarator_list2(TOKEN** token, NODE** node){
 //  	| declaration_specifiers init_declarator_list ';'
 //  	| static_assert_declaration
 //  	;
-int declaration(TOKEN** token, NODE** node){
+int declaration(TOKEN** token, NODE** node)
+{
     NODE* temp = declarationOne(node, NODE_DECLARATION);
     if (declaration_specifiers(token, node) == 1){
         if ((*token)->punctType == SEMICOLON){
             consume_token(token);
             return 1;
         }
-        temp->identifierString = (*token)->location;
-        temp->identifierLength = (*token)->length;
+        temp->symbol = newSymbol(SYM_VAR, (*token)->tokenContent);
         if (init_declarator_list(token, node) == 1){
             if ((*token)->punctType == SEMICOLON){
                 declarationTwo(node, temp);
                 consume_token(token);
                 return 1;
-            }
-            else{
+            } else{
                 errorAt(token, "Terminator error. Expected \';\'\n");
             }
         }
@@ -1099,7 +1136,8 @@ int declaration(TOKEN** token, NODE** node){
 //  block_item_list
 //  	: block_item block_item_list2
 //  	;
-int block_item_list(TOKEN** token, NODE** node){
+int block_item_list(TOKEN** token, NODE** node)
+{
     if(block_item(token, node) == 1){
         block_item_list2(token, node);
         return 1;
@@ -1110,7 +1148,8 @@ int block_item_list(TOKEN** token, NODE** node){
 //  	: block_item block_item_list2
 //      | epsilon
 //  	;
-int block_item_list2(TOKEN** token, NODE** node){
+int block_item_list2(TOKEN** token, NODE** node)
+{
     if (block_item(token, node) == 1){
         block_item_list2(token, node);
         return 1;
@@ -1122,11 +1161,11 @@ int block_item_list2(TOKEN** token, NODE** node){
 //  	: declaration
 //  	| statement
 //  	;
-int block_item(TOKEN** token, NODE** node){
+int block_item(TOKEN** token, NODE** node)
+{
     if (declaration(token, node) == 1){
         return 1;
-    }
-    else if (statement(token, node) == 1){
+    } else if (statement(token, node) == 1){
         return 1;
     }
     return 0;
@@ -1137,7 +1176,8 @@ int block_item(TOKEN** token, NODE** node){
 //  	| '{'  block_item_list '}'
 //  	;
 //  
-int compound_statement(TOKEN** token, NODE** node){
+int compound_statement(TOKEN** token, NODE** node)
+{
     if ((*token)->punctType == LBRACE){
         consume_token(token);
         if ((*token)->punctType == RBRACE){
@@ -1148,8 +1188,7 @@ int compound_statement(TOKEN** token, NODE** node){
             if ((*token)->punctType == RBRACE){
                 consume_token(token);
                 return 1;
-            }
-            else{
+            } else{
                 errorAt(token, "Brace mismatch. Expected \'}\'\n");
             }
         }
@@ -1161,14 +1200,14 @@ int compound_statement(TOKEN** token, NODE** node){
 //  	: IDENTIFIER direct_declarator2
 //  	| '(' declarator ')' direct_declarator2
 //  	;
-int direct_declarator(TOKEN** token, NODE** node){
+int direct_declarator(TOKEN** token, NODE** node)
+{
     if ((*token)->lexElem == IDNTFR){
         consume_token(token);
         if (direct_declarator2(token, node) == 1){
             return 1;
         }
-    }
-    else if ((*token)->punctType == LPAR){
+    } else if ((*token)->punctType == LPAR){
         consume_token(token);
         if (declarator(token, node) == 1){
             if ((*token)->punctType == RPAR){
@@ -1198,7 +1237,8 @@ int direct_declarator(TOKEN** token, NODE** node){
 //  	| '(' ')' direct_declarator2
 //  	| '(' identifier_list ')' direct_declarator2
 //      | epsilon
-int direct_declarator2(TOKEN** token, NODE** node){
+int direct_declarator2(TOKEN** token, NODE** node)
+{
     if ((*token)->punctType == LPAR){
         consume_token(token);
         if ((*token)->punctType == RPAR){
@@ -1215,7 +1255,8 @@ int direct_declarator2(TOKEN** token, NODE** node){
 //  	: pointer direct_declarator
 //  	| direct_declarator
 //  	;
-int declarator(TOKEN** token, NODE** node){
+int declarator(TOKEN** token, NODE** node)
+{
     if (direct_declarator(token, node) == 1){
         return 1;
     }
@@ -1240,49 +1281,40 @@ int declarator(TOKEN** token, NODE** node){
 //  	| enum_specifier
 //  	| TYPEDEF_NAME		/* after it has been defined as such */
 //  	;
-int type_specifier(TOKEN** token, NODE** node){
+int type_specifier(TOKEN** token, NODE** node)
+{
     if ((*token)->lexElem == KEYWRD){
         if((*token)->keywdType == VOID){
             consume_token(token);
             return 1;
-        }
-        else if ((*token)->keywdType == CHAR){
+        } else if ((*token)->keywdType == CHAR){
             consume_token(token);
             return 1;
-        }
-        else if ((*token)->keywdType == SHORT){
+        } else if ((*token)->keywdType == SHORT){
             consume_token(token);
             return 1;
-        }
-        else if ((*token)->keywdType == INT){                               
+        } else if ((*token)->keywdType == INT){                               
             consume_token(token);
             return 1;
-        }
-        else if ((*token)->keywdType == LONG){
+        } else if ((*token)->keywdType == LONG){
             consume_token(token);
             return 1;
-        }
-        else if ((*token)->keywdType == FLOAT){
+        } else if ((*token)->keywdType == FLOAT){
             consume_token(token);
             return 1;
-        }
-        else if ((*token)->keywdType == DOUBLE){
+        } else if ((*token)->keywdType == DOUBLE){
             consume_token(token);
             return 1;
-        }
-        else if ((*token)->keywdType == SIGNED){
+        } else if ((*token)->keywdType == SIGNED){
             consume_token(token);
             return 1;
-        }
-        else if ((*token)->keywdType == UNSIGNED){
+        } else if ((*token)->keywdType == UNSIGNED){
             consume_token(token);
             return 1;
-        }
-        else{
+        } else{
             return 0;
         }
-    }
-    else{
+    } else{
         return 0;
     }
 }
@@ -1298,12 +1330,12 @@ int type_specifier(TOKEN** token, NODE** node){
 //  	| alignment_specifier declaration_specifiers
 //  	| alignment_specifier
 //  	;
-int declaration_specifiers(TOKEN** token, NODE** node){
+int declaration_specifiers(TOKEN** token, NODE** node)
+{
     if (type_specifier(token, node) == 1){
         declaration_specifiers(token, node);
         return 1;
-    }
-    else{
+    } else{
         return 0;
     }
 }
@@ -1311,11 +1343,14 @@ int declaration_specifiers(TOKEN** token, NODE** node){
 //  	: declaration_specifiers declarator declaration_list compound_statement
 //  	| declaration_specifiers declarator compound_statement
 //  	;
-int function_definition(TOKEN** token, NODE** node){
+int function_definition(TOKEN** token, NODE** node)
+{
     NODE* temp = binaryOne(node, NODE_FUNCDEC);
     if (declaration_specifiers(token, node) == 1){
-        temp->identifierString = (*token)->location;
-        temp->identifierLength = (*token)->length;
+        temp->symbol = newSymbol(SYM_FUNC, (*token)->tokenContent);
+        if (!symTblInsert(parserTable, (*token)->tokenContent, temp->symbol)){
+            errorAt(token, "Redefinition of symbol \'%s\'\n", (*token)->tokenContent);
+        }
         if (declarator(token, node) == 1){
             if (compound_statement(token, node) == 1){
                 binaryTwo(node, temp);
@@ -1329,7 +1364,8 @@ int function_definition(TOKEN** token, NODE** node){
 //  	: function_definition
 //  	| declaration
 //  	;
-int external_declaration(TOKEN** token, NODE** node){
+int external_declaration(TOKEN** token, NODE** node)
+{
     if (function_definition(token, node) == 1){
         return 1;
     }
@@ -1342,7 +1378,8 @@ int external_declaration(TOKEN** token, NODE** node){
 //  translation_unit
 //  	: external_declaration translation_unit2
 //  	;
-int translation_unit(TOKEN** token, NODE** node){
+int translation_unit(TOKEN** token, NODE** node)
+{
     if (external_declaration(token, node) == 1){
         if (translation_unit2(token, node) == 1){
             return 1;
@@ -1354,7 +1391,8 @@ int translation_unit(TOKEN** token, NODE** node){
 //  	: external_declaration translation_unit2
 //      | epsilon
 //  	;
-int translation_unit2(TOKEN** token, NODE** node){
+int translation_unit2(TOKEN** token, NODE** node)
+{
     if (external_declaration(token, node) == 1){
         if (translation_unit2(token, node) == 1){
             return 1;
@@ -1364,7 +1402,9 @@ int translation_unit2(TOKEN** token, NODE** node){
 }
 
 
-NODE* parse(TOKEN* token){
+NODE* parse(TOKEN* token, symbolTable* table)
+{
+    parserTable = table;
     NODE head = {};
     NODE* node = &head;
     for(;;){
