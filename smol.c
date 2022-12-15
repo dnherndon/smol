@@ -96,6 +96,7 @@ int main(int argc, char** argv){
 
     // Call Parser
     symbolTable* table = createSymbolTable(8);
+    table->scopeDepth = 0;
     NODE* node = parse(token, table);
     
     // Output file

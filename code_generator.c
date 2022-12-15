@@ -40,10 +40,10 @@ void generateFunction(NODE* node){
     // For functions, traverse the tree pre-order
     switch (node->kind){
     case NODE_FUNCDEC:
-        if (match(node->symbol->name, "main")){
+        if (match(node->symbolName, "main")){
             emitCode("global main\n");
         }
-        emitCode("%s:\n", node->symbol->name);
+        emitCode("%s:\n", node->symbolName);
         emitCode("    push rbp\n");
         emitCode("    mov rbp, rsp\n");
         // For function body, traverse the tree post-order
@@ -62,12 +62,13 @@ void generateStatement(NODE* node){
     }
     else if (node->right->kind == NODE_DECLARATION){
         generateDeclaration(node->right);
+        return;
     }
     generateExpression(node->left);
     return;
 }
 void generateDeclaration(NODE* node){
-    printf("here\n");
+    return;
 }
 
 void generateExpression(NODE* node){
@@ -83,7 +84,7 @@ void generateExpression(NODE* node){
         emitCode("    neg rax\n");
         return;
     case NODE_FUNCALL:
-        emitCode("    call %s\n", node->symbol->name);
+        emitCode("    call %s\n", node->symbolName);
         return;
     }
 
@@ -122,7 +123,7 @@ void generateExpression(NODE* node){
         emitCode("    movzx rax, al\n");
         return;
     }
-    printf("Invalid node\n");
+    printf("Invalid node: %d\n", node->kind);
     exit(1);
 }
 

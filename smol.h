@@ -125,16 +125,33 @@ static bool match(char* this, char* that){
  *    SYMBOL TABLE    *
  * ********************
  */
+typedef struct SYMBOL SYMBOL;
+typedef struct symbolTable symbolTable;
 typedef struct symTblEntry symTblEntry;
+typedef enum{
+    SYM_NULL,
+    SYM_FUNC,
+    SYM_VAR
+}symbolKind;
+
+struct SYMBOL{
+    symbolKind kind;        // Kind of symbol
+    char* name;             // String name of symbol
+    int offset;             // Local stack offset
+    symbolTable* scope;     // For funcs, enter scope
+};
+
 struct symTblEntry{
     char* key;
-    void* value;
+    SYMBOL* value;
 };
-typedef struct symbolTable symbolTable;
+
 struct symbolTable{
     symTblEntry* entry;
-    int size;
-    int count;
+    symbolTable* previous;
+    int size;                   // Table size
+    int count;                  // Number of times in table
+    int scopeDepth;
 };
 // This hashing function computes the 64 bit FNV-1a hash of a string
 unsigned long int hashingFunction(char* str, int length);
@@ -144,7 +161,7 @@ unsigned long int hashingFunction(char* str, int length);
 symbolTable* createSymbolTable(int size);
 
 // This inserts a value into the given table using the key
-int symTblInsert(symbolTable* table, char* key, void* value);
+symTblEntry* symTblInsert(symbolTable* table, char* key, SYMBOL* value);
 
 // This retrieves the pointer to an entry in the given table
 // using the key
@@ -153,6 +170,9 @@ symTblEntry* symTblGet(symbolTable* table, char* key);
 // This deletes the entry in the table with the key
 void symTblDelete(symbolTable* table, char* key);
 
+//
+void enterScope(symbolTable** currentScope, symbolTable** nextScope);
+void exitScope(symbolTable** currentScope);
 /*
  ****************
  *    PARSER    *
@@ -181,25 +201,12 @@ typedef enum{
     NODE_END
 }nodeKind;
 
-typedef struct SYMBOL SYMBOL;
-
-typedef enum{
-    SYM_NULL,
-    SYM_FUNC,
-    SYM_VAR
-}symbolKind;
-
-struct SYMBOL{
-    symbolKind kind;
-    char* name;
-};
-
 struct NODE{
     nodeKind kind;
     NODE* left;
     NODE* right;
     int constantVal;
-    SYMBOL* symbol;
+    char* symbolName;
 };
 
 NODE* parse(TOKEN* token, symbolTable* table);

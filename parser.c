@@ -19,7 +19,7 @@
 #include "smol.h"
 
 // Symbol table
-symbolTable* parserTable;
+symbolTable* currentTable;
 
 // Function prototypes
 int block_item(TOKEN** token, NODE** node);
@@ -847,8 +847,18 @@ int postfix_expression2(TOKEN** token, NODE** node)
     } else if ((*token)->punctType == LPAR){
         consume_token(token);
         if((*token)->punctType == RPAR){
+            symbolTable* search = currentTable;
+            for (int i = currentTable->scopeDepth; i >= 0; i--){
+                symTblEntry* entry = symTblGet(search, (*node)->symbolName);
+                if (entry != NULL){
+                    break;
+                }
+                if ((entry == NULL) && (i == 0)){
+                    errorAt(token, "Implicit function declaration of \'%s\'\n", (*node)->symbolName);
+                }
+                exitScope(&search);
+            }
             (*node)->kind = NODE_FUNCALL;
-            (*node)->symbol->kind = SYM_FUNC;
             consume_token(token);
             if (postfix_expression2(token, node) == 1){
                 return 1;
@@ -912,7 +922,7 @@ int primary_expression(TOKEN** token, NODE** node)
 {
     if ((*token)->lexElem == IDNTFR){
         identifierNode(node, NODE_NULL);
-        (*node)->symbol = newSymbol(SYM_NULL, (*token)->tokenContent);
+        (*node)->symbolName = (*token)->tokenContent;
         consume_token(token);
         return 1;
     } else if (constant(token, node) == 1){
@@ -1119,7 +1129,11 @@ int declaration(TOKEN** token, NODE** node)
             consume_token(token);
             return 1;
         }
-        temp->symbol = newSymbol(SYM_VAR, (*token)->tokenContent);
+        temp->symbolName = (*token)->tokenContent;
+        symTblEntry* entry = symTblInsert(currentTable, temp->symbolName, newSymbol(SYM_VAR, temp->symbolName)); 
+        if (entry == NULL){
+            errorAt(token, "Redefinition of symbol \'%s\' in this scope\n", temp->symbolName);
+        }
         if (init_declarator_list(token, node) == 1){
             if ((*token)->punctType == SEMICOLON){
                 declarationTwo(node, temp);
@@ -1219,7 +1233,7 @@ int direct_declarator(TOKEN** token, NODE** node)
             errorAt(token, "Mismatched parentheses. Expected \')\'\n");
         }
     }
-    errorAt(token, "Expected direct declarator\n");
+    errorAt(token, "Expected an identifier\n");
     return 0;
 }
 
@@ -1347,13 +1361,17 @@ int function_definition(TOKEN** token, NODE** node)
 {
     NODE* temp = binaryOne(node, NODE_FUNCDEC);
     if (declaration_specifiers(token, node) == 1){
-        temp->symbol = newSymbol(SYM_FUNC, (*token)->tokenContent);
-        if (!symTblInsert(parserTable, (*token)->tokenContent, temp->symbol)){
-            errorAt(token, "Redefinition of symbol \'%s\'\n", (*token)->tokenContent);
+        temp->symbolName = (*token)->tokenContent;
+        symTblEntry* entry = symTblInsert(currentTable, (*token)->tokenContent, newSymbol(SYM_FUNC, temp->symbolName));
+        if (entry == NULL){
+            errorAt(token, "Redefinition of symbol \'%s\' in this scope\n", (*token)->tokenContent);
         }
+        entry->value->scope = createSymbolTable(16);
+        enterScope(&currentTable, &entry->value->scope);
         if (declarator(token, node) == 1){
             if (compound_statement(token, node) == 1){
                 binaryTwo(node, temp);
+                exitScope(&currentTable);
                 return 1;
             }
         }
@@ -1404,7 +1422,7 @@ int translation_unit2(TOKEN** token, NODE** node)
 
 NODE* parse(TOKEN* token, symbolTable* table)
 {
-    parserTable = table;
+    currentTable = table;
     NODE head = {};
     NODE* node = &head;
     for(;;){
