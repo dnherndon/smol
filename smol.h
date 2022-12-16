@@ -152,6 +152,7 @@ struct symbolTable{
     int size;                   // Table size
     int count;                  // Number of times in table
     int scopeDepth;
+    int totalLocalVars;
 };
 // This hashing function computes the 64 bit FNV-1a hash of a string
 unsigned long int hashingFunction(char* str, int length);
@@ -173,6 +174,8 @@ void symTblDelete(symbolTable* table, char* key);
 //
 void enterScope(symbolTable** currentScope, symbolTable** nextScope);
 void exitScope(symbolTable** currentScope);
+symTblEntry* searchScope(symbolTable* currentScope, char* symbolName);
+void symbolTableDump(symbolTable* currentScope);
 /*
  ****************
  *    PARSER    *
@@ -195,6 +198,7 @@ typedef enum{
     NODE_FUNCALL,   // Function Call
     NODE_FUNCDEC,   // Function Declaration
     NODE_STATEMENT,
+    NODE_IDENTIFIER,
     NODE_VAR,
     NODE_ASSIGN,
     NODE_DECLARATION,

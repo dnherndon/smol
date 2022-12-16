@@ -197,7 +197,11 @@ void consume_token(TOKEN** token)
 //                         | |=
 int assignment_operator(TOKEN** token, NODE** node)
 {
-    return 1;
+    if ((*token)->punctType == EQUAL){
+        consume_token(token);
+        return 1;
+    }
+    return 0;
 }
 // <initializer> ::= <assignment-expression>
 //                 | { <initializer-list> }
@@ -847,16 +851,8 @@ int postfix_expression2(TOKEN** token, NODE** node)
     } else if ((*token)->punctType == LPAR){
         consume_token(token);
         if((*token)->punctType == RPAR){
-            symbolTable* search = currentTable;
-            for (int i = currentTable->scopeDepth; i >= 0; i--){
-                symTblEntry* entry = symTblGet(search, (*node)->symbolName);
-                if (entry != NULL){
-                    break;
-                }
-                if ((entry == NULL) && (i == 0)){
-                    errorAt(token, "Implicit function declaration of \'%s\'\n", (*node)->symbolName);
-                }
-                exitScope(&search);
+            if (searchScope(currentTable, (*node)->symbolName) == NULL){
+                errorAt(token, "Implicit function declaration of \'%s\'\n", (*node)->symbolName);    
             }
             (*node)->kind = NODE_FUNCALL;
             consume_token(token);
@@ -909,6 +905,16 @@ int postfix_expression2(TOKEN** token, NODE** node)
         errorAt(token, "Expected expression\n");
         return 0;
     }
+    if ((*node)->kind == NODE_IDENTIFIER){
+        // Epsilon case, must be a variable if not a func but is ident
+        symTblEntry* entry = symTblGet(currentTable, (*node)->symbolName);
+        if (entry == NULL){
+            errorAt(token, "Symbol \'%s\' not defined in this scope\n", (*node)->symbolName);
+        }
+        (*node)->kind = NODE_VAR;
+        return 1;
+    }
+    
     return 1;
 }
 //  primary_expression
@@ -921,7 +927,7 @@ int postfix_expression2(TOKEN** token, NODE** node)
 int primary_expression(TOKEN** token, NODE** node)
 {
     if ((*token)->lexElem == IDNTFR){
-        identifierNode(node, NODE_NULL);
+        identifierNode(node, NODE_IDENTIFIER);
         (*node)->symbolName = (*token)->tokenContent;
         consume_token(token);
         return 1;
@@ -961,15 +967,22 @@ int constant(TOKEN** token, NODE** node)
 //  	;
 int assignment_expression(TOKEN** token, NODE** node)
 {
-    if(conditional_expression(token, node) == 1){
-        return 1;
-    }
-    if (unary_expression(token, node) == 1){
+    // Unary expression is a subgroup of conditional expression
+    // So, we need to find out if the conditional expression is an assignable
+    // LVALUE or not
+    if (conditional_expression(token, node) == 1){
         if (assignment_operator(token, node) == 1){
+            NODE* temp = binaryOne(node, NODE_ASSIGN);
+            if ((*node)->kind != NODE_VAR){
+                printf("node: %d\n", (*node)->kind);
+                errorAt(token, "Not a modifiable LVALUE\n");
+            }
             if (assignment_expression(token, node) == 1){
+                binaryTwo(node, temp);
                 return 1;
             }
         }
+        return 1;
     }
     return 0;
 }
@@ -1123,20 +1136,20 @@ int init_declarator_list2(TOKEN** token, NODE** node)
 //  	;
 int declaration(TOKEN** token, NODE** node)
 {
-    NODE* temp = declarationOne(node, NODE_DECLARATION);
     if (declaration_specifiers(token, node) == 1){
         if ((*token)->punctType == SEMICOLON){
             consume_token(token);
             return 1;
         }
-        temp->symbolName = (*token)->tokenContent;
-        symTblEntry* entry = symTblInsert(currentTable, temp->symbolName, newSymbol(SYM_VAR, temp->symbolName)); 
+        (*node)->symbolName = (*token)->tokenContent;
+        symTblEntry* entry = symTblInsert(currentTable, (*node)->symbolName, newSymbol(SYM_VAR, (*node)->symbolName)); 
         if (entry == NULL){
-            errorAt(token, "Redefinition of symbol \'%s\' in this scope\n", temp->symbolName);
+            errorAt(token, "Redefinition of symbol \'%s\' in this scope\n", (*node)->symbolName);
         }
+        currentTable->totalLocalVars++;
+        entry->value->offset = currentTable->totalLocalVars;
         if (init_declarator_list(token, node) == 1){
             if ((*token)->punctType == SEMICOLON){
-                declarationTwo(node, temp);
                 consume_token(token);
                 return 1;
             } else{

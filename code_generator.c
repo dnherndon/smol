@@ -46,10 +46,13 @@ void generateFunction(NODE* node){
         emitCode("%s:\n", node->symbolName);
         emitCode("    push rbp\n");
         emitCode("    mov rbp, rsp\n");
+        symTblEntry* entry = searchScope(codegenTable, node->symbolName);
+        enterScope(&codegenTable, &entry->value->scope);
         // For function body, traverse the tree post-order
         if ((node->right->kind == NODE_STATEMENT) || (node->right->kind == NODE_DECLARATION)){
             generateStatement(node->right);
         }
+        exitScope(&codegenTable);
         emitCode("    pop rbp\n");
         emitCode("    ret\n");
         return;
@@ -59,10 +62,8 @@ void generateFunction(NODE* node){
 void generateStatement(NODE* node){
     if (node->right->kind == NODE_STATEMENT){
         generateStatement(node->right);
-    }
-    else if (node->right->kind == NODE_DECLARATION){
-        generateDeclaration(node->right);
-        return;
+    } else if (node->right->kind == NODE_DECLARATION){
+        
     }
     generateExpression(node->left);
     return;
@@ -75,6 +76,7 @@ void generateExpression(NODE* node){
     if (node == NULL){
         return;
     }
+    symTblEntry* entry;
     switch (node->kind){
     case NODE_INT:
         emitCode("    mov rax, %d\n", node->constantVal);
@@ -85,6 +87,17 @@ void generateExpression(NODE* node){
         return;
     case NODE_FUNCALL:
         emitCode("    call %s\n", node->symbolName);
+        return;
+    case NODE_ASSIGN:
+        generateExpression(node->left);
+        emitCode("    push rax\n");
+        generateExpression(node->right);
+        emitCode("    pop rcx\n");
+        emitCode("    mov eax, [rcx]\n");
+        return;
+    case NODE_VAR:
+        entry = searchScope(codegenTable, node->symbolName);
+        emitCode("    lea rax, qword [rbp - %d]\n", (entry->value->offset)*4);
         return;
     }
 
@@ -132,7 +145,10 @@ int code_generator(NODE* node, FILE* outputFile, symbolTable* table){
     codegenTable = table;
     //printf("node: %ld\n", node->kind);
     //printf("node: %ld\n", node->right->kind);
-    //printf("node: %ld\n", node->right->left->kind);
+    //printf("node: %ld\n", node->right->right->kind);
+    //printf("node: %ld\n", node->right->right->left->kind);
+    //printf("node: %ld\n", node->right->right->left->left->kind);
+    //printf("node: %ld\n", node->right->right->left->right->kind);
     generateFunction(node);
     return 1;
 }

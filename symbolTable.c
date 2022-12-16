@@ -58,7 +58,13 @@ symTblEntry* symTblInsert(symbolTable* table, char* key, SYMBOL* value)
 }
 
 symTblEntry* symTblGet(symbolTable* table, char* key)
-{
+{   
+    if (table == NULL){
+        return NULL;
+    }
+    if (key == NULL){
+        return NULL;
+    }
     unsigned long int hash = hashingFunction(key, strlen(key));
 
     for (int i = 0; i < table->size; i++){
@@ -95,4 +101,33 @@ void exitScope(symbolTable** currentScope)
     if ((*currentScope)->previous != NULL){
         (*currentScope) = (*currentScope)->previous;
     }
+}
+
+symTblEntry* searchScope(symbolTable* currentScope, char* symbolName)
+{
+    symbolTable* search = currentScope;
+    for (int i = currentScope->scopeDepth; i >= 0; i--){
+        symTblEntry* entry = symTblGet(search, symbolName);
+        if (entry != NULL){
+            return entry;
+        }
+        if ((entry == NULL) && (i == 0)){
+            return entry;
+        }
+        exitScope(&search);
+    }
+    return NULL;
+}
+void symbolTableDump(symbolTable* currentScope)
+{
+    for (int i = 0; i <currentScope->size; i++){
+        if (currentScope->entry == NULL){
+            continue;
+        }
+        if (currentScope->entry[i].value == NULL){
+            continue;
+        }
+        printf("Entry: %s\n", currentScope->entry[i].value->name);
+    }
+    return;
 }
