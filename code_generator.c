@@ -22,6 +22,7 @@ void generateFunction(NODE* node);
 void generateExpression(NODE* node);
 void generateStatement(NODE* node);
 void generateDeclaration(NODE* node);
+void generateVariable(NODE* node);
 
 FILE *out;
 symbolTable* codegenTable;
@@ -76,7 +77,6 @@ void generateExpression(NODE* node){
     if (node == NULL){
         return;
     }
-    symTblEntry* entry;
     switch (node->kind){
     case NODE_INT:
         emitCode("    mov rax, %d\n", node->constantVal);
@@ -89,15 +89,18 @@ void generateExpression(NODE* node){
         emitCode("    call %s\n", node->symbolName);
         return;
     case NODE_ASSIGN:
-        generateExpression(node->left);
-        emitCode("    push rax\n");
         generateExpression(node->right);
-        emitCode("    pop rcx\n");
-        emitCode("    mov eax, [rcx]\n");
+        emitCode("    mov ");
+        generateVariable(node->left);
+        emitCode(", rax\n");
+        return;
+    case NODE_RETURN:
+        generateExpression(node->left);
         return;
     case NODE_VAR:
-        entry = searchScope(codegenTable, node->symbolName);
-        emitCode("    lea rax, qword [rbp - %d]\n", (entry->value->offset)*4);
+        emitCode("    mov rax, ");
+        generateVariable(node);
+        emitCode("\n");
         return;
     }
 
@@ -114,7 +117,7 @@ void generateExpression(NODE* node){
         emitCode("    sub rax, rcx\n");
         return;
     case NODE_MUL:                          // *
-        emitCode("    mul rcx\n");
+        emitCode("    imul rax, rcx\n");
         return;
     case NODE_DIV:                          // /
         emitCode("    xor rdx, rdx\n");
@@ -138,6 +141,16 @@ void generateExpression(NODE* node){
     }
     printf("Invalid node: %d\n", node->kind);
     exit(1);
+}
+
+void generateVariable(NODE* node){
+    symTblEntry* entry;
+    switch(node->kind){
+    case NODE_VAR:
+        entry = searchScope(codegenTable, node->symbolName);
+        emitCode("[rbp - %d]", (entry->value->offset)*4);
+        return;
+    }
 }
 
 int code_generator(NODE* node, FILE* outputFile, symbolTable* table){

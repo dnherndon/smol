@@ -5,8 +5,7 @@ This is the beginnings of a small C compiler. It is not yet completely functiona
 
 At this moment, it is easier to describe what smol can do, rather than what it cannot. However, some limitations include:
 - No type checking (all types are a WORD)
-- Not yet complete symbol table (prevents redefinitions of functions currently)
-- No variables (see above about symbol table)
+- Variables are only one type
 
 As of now, smol is able to compile integer return value (recall everything is a WORD, types are not enforced yet) functions such as the following:
 
@@ -16,6 +15,14 @@ int eight(){
 }
 int main(){
     return 3 * (2 + 1) + eight();
+}
+```
+Or simple variables such as:
+```c
+int main(){
+    int x;
+    x = 5;
+    return x;
 }
 ```
 smol Currently Supports:

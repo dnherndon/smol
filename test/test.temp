@@ -1,0 +1,8 @@
+int two(){
+    return 2;
+}
+int main(){
+    int x;
+    x = two();
+    return x;
+}

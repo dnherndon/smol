@@ -23,3 +23,6 @@ test 21 empty.exe
 test 1 equivalent.exe
 test 1 not_equivalent.exe
 test 3 modulo.exe
+test 3 variable.exe
+test 5 multivariable.exe
+test 7 complexAssignment.exe

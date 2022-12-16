@@ -996,9 +996,11 @@ int assignment_expression(TOKEN** token, NODE** node)
 int jump_statement(TOKEN** token, NODE** node)
 {
     if ((*token)->keywdType == RETURN){
+        NODE* temp = unaryOne(node, NODE_RETURN);
         consume_token(token);
         if (expression(token, node) == 1){
             if ((*token)->punctType == SEMICOLON){
+                unaryTwo(node, temp);
                 consume_token(token);
                 return 1;
             }

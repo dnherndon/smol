@@ -202,6 +202,7 @@ typedef enum{
     NODE_VAR,
     NODE_ASSIGN,
     NODE_DECLARATION,
+    NODE_RETURN,
     NODE_END
 }nodeKind;
 
