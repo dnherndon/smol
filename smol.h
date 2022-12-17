@@ -203,7 +203,7 @@ typedef enum{
     NODE_ASSIGN,
     NODE_DECLARATION,
     NODE_RETURN,
-    NODE_END
+    NODE_NOOP
 }nodeKind;
 
 struct NODE{

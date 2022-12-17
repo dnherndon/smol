@@ -1143,15 +1143,19 @@ int declaration(TOKEN** token, NODE** node)
             consume_token(token);
             return 1;
         }
-        (*node)->symbolName = (*token)->tokenContent;
-        symTblEntry* entry = symTblInsert(currentTable, (*node)->symbolName, newSymbol(SYM_VAR, (*node)->symbolName)); 
+        NODE* temp = declarationOne(node, NODE_DECLARATION);
+        (temp)->symbolName = (*token)->tokenContent;
+        symTblEntry* entry = symTblInsert(currentTable, (temp)->symbolName, newSymbol(SYM_VAR, (temp)->symbolName)); 
         if (entry == NULL){
-            errorAt(token, "Redefinition of symbol \'%s\' in this scope\n", (*node)->symbolName);
+            errorAt(token, "Redefinition of symbol \'%s\' in this scope\n", (temp)->symbolName);
         }
         currentTable->totalLocalVars++;
         entry->value->offset = currentTable->totalLocalVars;
+        NODE* decl = unaryOne(node, NODE_NOOP);
         if (init_declarator_list(token, node) == 1){
+            unaryTwo(node, decl);
             if ((*token)->punctType == SEMICOLON){
+                declarationTwo(node, temp);
                 consume_token(token);
                 return 1;
             } else{

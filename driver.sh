@@ -26,3 +26,9 @@ test 3 modulo.exe
 test 3 variable.exe
 test 5 multivariable.exe
 test 7 complexAssignment.exe
+test 30 complexReturn.exe
+test 5 stackAlignTest.exe
+test 25 doubleVarReturn.exe
+test 4 assignFuncToVar.exe
+test 15 funcVarAssign.exe
+test 9 multiOrderDecl.exe

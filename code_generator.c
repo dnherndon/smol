@@ -23,6 +23,17 @@ void generateExpression(NODE* node);
 void generateStatement(NODE* node);
 void generateDeclaration(NODE* node);
 void generateVariable(NODE* node);
+int alignStack(int numVars);
+
+int alignStack(int numVars)
+{
+    if (numVars != 0){
+        int temp = ((numVars + 1)*8) / 16;
+        int stackSize = (temp * 16) + 16;
+        return stackSize;
+    }
+    return 0;
+}
 
 FILE *out;
 symbolTable* codegenTable;
@@ -45,16 +56,22 @@ void generateFunction(NODE* node){
             emitCode("global main\n");
         }
         emitCode("%s:\n", node->symbolName);
-        emitCode("    push rbp\n");
-        emitCode("    mov rbp, rsp\n");
         symTblEntry* entry = searchScope(codegenTable, node->symbolName);
         enterScope(&codegenTable, &entry->value->scope);
+        emitCode("    push rbp\n");
+        emitCode("    mov rbp, rsp\n");
+        if (codegenTable->count > 0){
+            emitCode("    sub rsp, %d\n", alignStack(codegenTable->count));
+        }
         // For function body, traverse the tree post-order
         if ((node->right->kind == NODE_STATEMENT) || (node->right->kind == NODE_DECLARATION)){
             generateStatement(node->right);
         }
-        exitScope(&codegenTable);
+        if (codegenTable->count > 0){
+            emitCode("    add rsp, %d\n", alignStack(codegenTable->count));
+        }
         emitCode("    pop rbp\n");
+        exitScope(&codegenTable);
         emitCode("    ret\n");
         return;
     }
@@ -64,7 +81,7 @@ void generateStatement(NODE* node){
     if (node->right->kind == NODE_STATEMENT){
         generateStatement(node->right);
     } else if (node->right->kind == NODE_DECLARATION){
-        
+        generateStatement(node->right);
     }
     generateExpression(node->left);
     return;
@@ -86,6 +103,7 @@ void generateExpression(NODE* node){
         emitCode("    neg rax\n");
         return;
     case NODE_FUNCALL:
+        emitCode("    mov rax, 0\n");
         emitCode("    call %s\n", node->symbolName);
         return;
     case NODE_ASSIGN:
@@ -101,6 +119,8 @@ void generateExpression(NODE* node){
         emitCode("    mov rax, ");
         generateVariable(node);
         emitCode("\n");
+        return;
+    case NODE_NOOP:
         return;
     }
 
@@ -148,7 +168,7 @@ void generateVariable(NODE* node){
     switch(node->kind){
     case NODE_VAR:
         entry = searchScope(codegenTable, node->symbolName);
-        emitCode("[rbp - %d]", (entry->value->offset)*4);
+        emitCode("[rbp - %d]", (entry->value->offset)*8);
         return;
     }
 }
@@ -156,12 +176,13 @@ void generateVariable(NODE* node){
 int code_generator(NODE* node, FILE* outputFile, symbolTable* table){
     out = outputFile;
     codegenTable = table;
-    //printf("node: %ld\n", node->kind);
-    //printf("node: %ld\n", node->right->kind);
-    //printf("node: %ld\n", node->right->right->kind);
-    //printf("node: %ld\n", node->right->right->left->kind);
-    //printf("node: %ld\n", node->right->right->left->left->kind);
-    //printf("node: %ld\n", node->right->right->left->right->kind);
+    //printf("Here: %d\n", node->kind);
+    //printf("Here: %d\n", node->right->kind);
+    //printf("Here: %d\n", node->right->right->kind);
+    //printf("Here: %d\n", node->right->right->right->kind);
+    //printf("Here: %d\n", node->right->right->right->right->kind);
+    //printf("Here: %d\n", node->right->right->right->right->right->kind);
+    //printf("Here: %d\n", node->right->right->right->right->right->left->kind);
     generateFunction(node);
     return 1;
 }

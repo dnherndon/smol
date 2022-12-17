@@ -7,3 +7,4 @@ The syntax of C in Backus-Naur form_files/js
 *.asm
 *.out
 test/temp.test
+test/test.temp

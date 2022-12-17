@@ -1,8 +1,7 @@
-int two(){
-    return 2;
-}
 int main(){
     int x;
-    x = two();
-    return x;
+    x = 5;
+    int y;
+    y = 2;
+    return 0;
 }
