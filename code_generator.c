@@ -29,7 +29,7 @@ int alignStack(int numVars)
 {
     if (numVars != 0){
         int temp = ((numVars + 1)*8) / 16;
-        int stackSize = (temp * 16) + 16;
+        int stackSize = (temp * 16);
         return stackSize;
     }
     return 0;
@@ -86,9 +86,6 @@ void generateStatement(NODE* node){
     generateExpression(node->left);
     return;
 }
-void generateDeclaration(NODE* node){
-    return;
-}
 
 void generateExpression(NODE* node){
     if (node == NULL){
@@ -120,7 +117,10 @@ void generateExpression(NODE* node){
         generateVariable(node);
         emitCode("\n");
         return;
-    case NODE_NOOP:
+    case NODE_DECLASS:
+        if (node->left->kind == NODE_ASSIGN){
+            generateExpression(node->left);
+        }
         return;
     }
 
@@ -176,7 +176,6 @@ void generateVariable(NODE* node){
 int code_generator(NODE* node, FILE* outputFile, symbolTable* table){
     out = outputFile;
     codegenTable = table;
-    //printf("Here: %d\n", node->kind);
     //printf("Here: %d\n", node->right->kind);
     //printf("Here: %d\n", node->right->right->kind);
     //printf("Here: %d\n", node->right->right->right->kind);

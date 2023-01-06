@@ -203,6 +203,7 @@ typedef enum{
     NODE_ASSIGN,
     NODE_DECLARATION,
     NODE_RETURN,
+    NODE_DECLASS,
     NODE_NOOP
 }nodeKind;
 

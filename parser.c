@@ -184,6 +184,11 @@ void consume_token(TOKEN** token)
 {
     *token = (*token)->next;
 }
+// Backtracks one token
+void backtrack_token(TOKEN** token)
+{
+    *token = (*token)->last;
+}
 // <assignment-operator> ::= =
 //                         | *=
 //                         | /=
@@ -203,9 +208,11 @@ int assignment_operator(TOKEN** token, NODE** node)
     }
     return 0;
 }
-// <initializer> ::= <assignment-expression>
-//                 | { <initializer-list> }
-//                 | { <initializer-list> , }
+//  initializer
+//  	: '{' initializer_list '}'
+//  	| '{' initializer_list ',' '}'
+//  	| assignment_expression
+//  	;
 int initializer(TOKEN** token, NODE** node)
 {
     if (assignment_expression(token, node) == 1){
@@ -1088,12 +1095,16 @@ int statement(TOKEN** token, NODE** node)
 //  	;
 int init_declarator(TOKEN** token, NODE** node)
 {
-    NODE* temp = binaryOne(node, NODE_ASSIGN);
     if (declarator(token, node) == 1){
         if ((*token)->punctType == EQUAL){
-            consume_token(token);
+            // To get initializers to work, need to
+            // go to before the equals sign.
+            // This essentially treats what comes after
+            // the declspec as just an assignment that
+            // has the added semantic action of placing the
+            // variable in the symbol table
+            backtrack_token(token);
             if (initializer(token, node) == 1){
-                binaryTwo(node, temp);
                 return 1;
             }
             errorAt(token, "Expected initializer\n");
@@ -1151,7 +1162,7 @@ int declaration(TOKEN** token, NODE** node)
         }
         currentTable->totalLocalVars++;
         entry->value->offset = currentTable->totalLocalVars;
-        NODE* decl = unaryOne(node, NODE_NOOP);
+        NODE* decl = unaryOne(node, NODE_DECLASS);
         if (init_declarator_list(token, node) == 1){
             unaryTwo(node, decl);
             if ((*token)->punctType == SEMICOLON){
@@ -1406,9 +1417,9 @@ int external_declaration(TOKEN** token, NODE** node)
     if (function_definition(token, node) == 1){
         return 1;
     }
-    if (declaration(token, node) == 1){
-        return 1;
-    }
+    //if (declaration(token, node) == 1){
+    //    return 1;
+    //}
     return 0;
 }
 

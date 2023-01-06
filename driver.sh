@@ -32,3 +32,4 @@ test 25 doubleVarReturn.exe
 test 4 assignFuncToVar.exe
 test 15 funcVarAssign.exe
 test 9 multiOrderDecl.exe
+test 55 initializers.exe
