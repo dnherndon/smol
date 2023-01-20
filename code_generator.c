@@ -24,6 +24,7 @@ void generateStatement(NODE* node);
 void generateDeclaration(NODE* node);
 void generateVariable(NODE* node);
 int alignStack(int numVars);
+void printAST(NODE* node, bool isLeft, int* level);
 
 int alignStack(int numVars)
 {
@@ -122,6 +123,14 @@ void generateExpression(NODE* node){
             generateExpression(node->left);
         }
         return;
+    case NODE_IF:
+        generateExpression(node->left);
+        //emitCode("    cmp");
+        //emitCode(", 0\n");
+        return;
+    case NODE_STATEMENT:
+        generateStatement(node->left);
+        return;
     }
 
     generateExpression(node->right);
@@ -173,9 +182,26 @@ void generateVariable(NODE* node){
     }
 }
 
+void printAST(NODE* node, bool isLeft, int* level)
+{
+    if (node != NULL){
+        if(isLeft){
+            (*level)++;
+        } else {
+            (*level)--;
+        }
+        printf("%d  %ld  %ld\n", *level, isLeft, node->kind);
+        printAST(node->left, true, level);
+        printAST(node->right, false, level);
+    }
+}
+
 int code_generator(NODE* node, FILE* outputFile, symbolTable* table){
     out = outputFile;
     codegenTable = table;
+    int* level = calloc(1, sizeof(int));
+    (*level) = 1;
+    printAST(node, false, level);
     //printf("Here: %d\n", node->right->kind);
     //printf("Here: %d\n", node->right->right->kind);
     //printf("Here: %d\n", node->right->right->right->kind);

@@ -79,6 +79,7 @@ int translation_unit2(TOKEN** token, NODE** node);
 int external_declaration(TOKEN** token, NODE** node);
 int expression_statement(TOKEN** token, NODE** node);
 int compound_statement(TOKEN** token, NODE** node);
+int selection_statement(TOKEN** token, NODE** node);
 
 // Node creation functions
 NODE* newNode(nodeKind kind){
@@ -1078,14 +1079,44 @@ int statement(TOKEN** token, NODE** node)
     if (compound_statement(token, node) == 1){
         statementTwo(node, temp);
         return 1;
-    }
-    if (expression_statement(token, node) == 1){
+    } else if (expression_statement(token, node) == 1){
+        statementTwo(node, temp);
+        return 1;
+    } else if (jump_statement(token, node) == 1){
+        statementTwo(node, temp);
+        return 1;
+    } else if (selection_statement(token, node) == 1){
         statementTwo(node, temp);
         return 1;
     }
-    if (jump_statement(token, node) == 1){
-        statementTwo(node, temp);
-        return 1;
+    return 0;
+}
+//      selection_statement
+//  	: IF '(' expression ')' statement ELSE statement
+//  	| IF '(' expression ')' statement
+//  	| SWITCH '(' expression ')' statement
+//  	;
+int selection_statement(TOKEN** token, NODE** node)
+{
+    if ((*token)->keywdType == IF){
+        NODE* temp = unaryOne(node, NODE_IF);
+        consume_token(token);
+        if ((*token)->punctType == LPAR){
+            consume_token(token);
+            if (expression(token, node) == 1){
+                if ((*token)->punctType == RPAR){
+                    consume_token(token);
+                    if (statement(token, node) == 1){
+                        unaryTwo(node, temp);
+                        return 1;
+                    }
+                } else{
+                    errorAt(token, "Mismatched parentheses\n");
+                }
+            }
+        } else{
+            errorAt(token, "Expected left parentheses\n");
+        }
     }
     return 0;
 }
@@ -1453,8 +1484,7 @@ int translation_unit2(TOKEN** token, NODE** node)
 NODE* parse(TOKEN* token, symbolTable* table)
 {
     currentTable = table;
-    NODE head = {};
-    NODE* node = &head;
+    NODE* node = newNode(NODE_NULL);
     for(;;){
         if (translation_unit(&token, &node) == 0){
             break;

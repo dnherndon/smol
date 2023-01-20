@@ -198,6 +198,7 @@ typedef enum{
     NODE_FUNCALL,   // Function Call
     NODE_FUNCDEC,   // Function Declaration
     NODE_STATEMENT,
+    NODE_IF,
     NODE_IDENTIFIER,
     NODE_VAR,
     NODE_ASSIGN,

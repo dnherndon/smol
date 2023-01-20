@@ -1,4 +1,4 @@
-CFLAGS=
+CFLAGS=-g
 SRCS=$(wildcard *.c)
 OBJS=$(SRCS:.c=.o)
 CC=clang
