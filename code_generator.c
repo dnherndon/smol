@@ -202,12 +202,6 @@ int code_generator(NODE* node, FILE* outputFile, symbolTable* table){
     int* level = calloc(1, sizeof(int));
     (*level) = 1;
     printAST(node, false, level);
-    //printf("Here: %d\n", node->right->kind);
-    //printf("Here: %d\n", node->right->right->kind);
-    //printf("Here: %d\n", node->right->right->right->kind);
-    //printf("Here: %d\n", node->right->right->right->right->kind);
-    //printf("Here: %d\n", node->right->right->right->right->right->kind);
-    //printf("Here: %d\n", node->right->right->right->right->right->left->kind);
     generateFunction(node);
     return 1;
 }
